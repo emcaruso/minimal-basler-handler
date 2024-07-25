@@ -25,16 +25,16 @@ This function, returns the grab result as a list of dictionaries, where each dic
 \
 Below some examples: 
 \
-All cameras, grab an image with the default exposure time value:
+All cameras, grab an image with the default exposure time value:\
 ```basler_handle.grab_images_from_cams()```
 \
-Cameras 0 and 3, grab an image with the default exposure time value:
+Cameras 0 and 3, grab an image with the default exposure time value:\
 ```basler_handle.grab_images_from_cams( cam_ids = [0, 3] )```
 \
-All cameras, grab two images with exposure times 10000 and 50000
+All cameras, grab two images with exposure times 10000 and 50000\
 ```basler_handle.grab_images_from_cams( number_of_images = 2, exposure_time = [10000, 50000] )```
 \
-Camera 2, grab five images with exposure time 10000
+Camera 2, grab five images with exposure time 10000\
 ```basler_handle.grab_images_from_cams( number_of_images = 5, exposure_time = 10000, cam_ids = 2 )```
 
 - **show_results( results )**
