@@ -1,0 +1,24 @@
+
+# logger
+log:
+  filename: "logs/basler-log.txt" # name of the log file
+  format: '%(asctime)s - %(levelname)s - %(message)s' # format of the logger
+
+# info of cameras
+# see keys at https://docs.baslerweb.com/pylonapi/cpp/namespace_pylon_1_1_key#variable-serialnumberkey
+camera_info:
+  - "VendorName"
+  - "ModelName"
+  - "IpAddress"
+  # - "MacAddress"
+  
+# image grabber
+grab:
+  max_image_num: 50                 # maximum number of consecutive images to grab
+  max_attempts: 5                   # maximum number of attempts while grabbing an image
+  timeout: 5000                     # timeout for waiting a grab result
+  exposure_time_default: 20000      # default exposure time
+  fps: 60                           # fps value for the video stream
+  exposure_range: [20, 100000]      # range of possible values for the exposure time
+
+
