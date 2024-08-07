@@ -1,4 +1,5 @@
 from pypylon import pylon, genicam
+import cv2
 import os
 import itertools
 from typing import Union, List, Dict
@@ -44,7 +45,8 @@ class BaslerHandler:
 
         # Create a file handler
         file_dir = os.path.dirname(self._cfg.log.filename)
-        if not os.path.exists(file_dir): os.makedirs(file_dir)
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
         file_handler = logging.FileHandler(self._cfg.log.filename)
         file_handler.setLevel(logging.INFO)
 
@@ -68,7 +70,11 @@ class BaslerHandler:
 
         # load devices
         tlf = pylon.TlFactory.GetInstance()
-        self._devices = tlf.EnumerateDevices([pylon.DeviceInfo(),])
+        self._devices = tlf.EnumerateDevices(
+            [
+                pylon.DeviceInfo(),
+            ]
+        )
         self.n_devices = len(self._devices)
 
         # set camera array
@@ -90,7 +96,7 @@ class BaslerHandler:
         """
 
         camera = self._cam_array[cam_id]
-        period = int((1/fps)*1e6)
+        period = int((1 / fps) * 1e6)
         camera.BslPeriodicSignalPeriod.Value = period
         camera.BslPeriodicSignalDelay.Value = 0
         camera.TriggerSelector.Value = "FrameStart"
@@ -152,8 +158,13 @@ class BaslerHandler:
         # control on input ranges
         if error_msg is None and not (cam_id >= 0 and cam_id < self.n_devices):
             error_msg = f"Cam ids must be between 0 and the number of devices ({self.n_devices})"
-        if error_msg is None and not (exposure_time >= self._cfg.grab.exposure_range[0] and exposure_time < self._cfg.grab.exposure_range[1]):
-            error_msg = f"Exposure time must be between the range specified in the config file"
+        if error_msg is None and not (
+            exposure_time >= self._cfg.grab.exposure_range[0]
+            and exposure_time < self._cfg.grab.exposure_range[1]
+        ):
+            error_msg = (
+                f"Exposure time must be between the range specified in the config file"
+            )
         # return error
         if error_msg is not None:
             self._log.error(error_msg)
@@ -179,7 +190,8 @@ class BaslerHandler:
 
                 # wait for an image and then retrieve it.
                 grabResult = camera.RetrieveResult(
-                    self._cfg.grab.timeout, pylon.TimeoutHandling_ThrowException)
+                    self._cfg.grab.timeout, pylon.TimeoutHandling_ThrowException
+                )
 
                 # image grabbed successfully?
                 if grabResult.GrabSucceeded():
@@ -190,22 +202,31 @@ class BaslerHandler:
                     # log
                     if log:
                         self._log.info(
-                            f"Grab successful: Cam: {str(cam_id)}, exposure_time: {str(exposure_time)}")
+                            f"Grab successful: Cam: {str(cam_id)}, exposure_time: {str(exposure_time)}"
+                        )
                     break
 
                 #  if max attempts is exceeded, exit
                 elif n_attempts > max_attempts:
                     self._log.error(error_msg)
 
-                    return {"success": False, "error_msg": "Max number of attempts exceeded"}
+                    return {
+                        "success": False,
+                        "error_msg": "Max number of attempts exceeded",
+                    }
 
                 # update number of attempts
                 n_attempts += 1
 
             # return result
             grabResult.Release()
-            result = {"cam_id": cam_id, "exposure_time": exposure_time, "image": img,
-                      "device_info": self._devices_info[cam_id], "success": True}
+            result = {
+                "cam_id": cam_id,
+                "exposure_time": exposure_time,
+                "image": img,
+                "device_info": self._devices_info[cam_id],
+                "success": True,
+            }
             return result
 
         # Error handling
@@ -236,8 +257,8 @@ class BaslerHandler:
             # insert infos defined in config into the dictionary
             for info_key in self._cfg.camera_info:
                 info = None
-                if getattr(device, "Is"+info_key+"Available")():
-                    info = getattr(device, "Get"+info_key)()
+                if getattr(device, "Is" + info_key + "Available")():
+                    info = getattr(device, "Get" + info_key)()
                 infos[cam_id][info_key] = info
             infos[cam_id]["cam_id"] = cam_id
 
@@ -267,7 +288,9 @@ class BaslerHandler:
 
         self._load_devices()
         if not (cam_id >= 0 and cam_id < self.n_devices):
-            self._log.error(f"Cam ids must be between 0 and the number of devices ({self.n_devices})")
+            self._log.error(
+                f"Cam ids must be between 0 and the number of devices ({self.n_devices})"
+            )
             return False
 
         camera = self._cam_array[cam_id]
@@ -287,7 +310,7 @@ class BaslerHandler:
             result = self._grab_basic(cam_id, exposure_time, log=False)
             cv2.imshow(f"Stream of camera: {cam_id}", result["image"])
             key = cv2.waitKey(1)
-            if key == ord('q'):
+            if key == ord("q"):
                 self._stop_cams()
                 cv2.destroyAllWindows()
                 break
@@ -295,7 +318,12 @@ class BaslerHandler:
 
         return True
 
-    def grab_images_from_cams(self, number_of_images: int = 1, exposure_time: Union[int, List[int]] = None, cam_ids: Union[int, List[int]] = None) -> List[Dict]:
+    def grab_images_from_cams(
+        self,
+        number_of_images: int = 1,
+        exposure_time: Union[int, List[int]] = None,
+        cam_ids: Union[int, List[int]] = None,
+    ) -> List[Dict]:
         """
         Grab one or multiple images with one or more cameras
 
@@ -315,7 +343,7 @@ class BaslerHandler:
                      Each dictionary contains the grabbed image and other informations like
                      the camera id, the exposure time, the image number, the grabbed image and the device info.
                      the dictionary also contains a 'success' key, if it's false, an error occurred, and its description
-                     will be inserted in the 'error_msg' field.                  
+                     will be inserted in the 'error_msg' field.
         """
 
         # update devices
@@ -333,7 +361,7 @@ class BaslerHandler:
 
         # set exposure time, handle multiple exposure times
         if exposure_time.__class__ != list:
-            exposure_time = list([exposure_time])*number_of_images
+            exposure_time = list([exposure_time]) * number_of_images
         if len(exposure_time) != number_of_images:
             error_msg = f"Exposure time list has not same length {len(exposure_time)} of number of images ({number_of_images})"
             self._log.error(error_msg)
@@ -380,7 +408,8 @@ class BaslerHandler:
             # show the images
             else:
                 cv2.imshow(
-                    f"cam: {res['cam_id']}, i: {res['image_number']}", res["image"])
+                    f"cam: {res['cam_id']}, i: {res['image_number']}", res["image"]
+                )
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         return True
@@ -389,8 +418,6 @@ class BaslerHandler:
 if __name__ == "__main__":
 
     # test basler handler
-    import cv2
-
     config_path: Path = Path(__file__).parent / "config.yaml"
     basl_handl = BaslerHandler(config_path)
     basl_handl.log_devices_info()
@@ -406,17 +433,20 @@ if __name__ == "__main__":
 
     # test one cam, multi exposure
     results = basl_handl.grab_images_from_cams(
-        cam_ids=0, number_of_images=3, exposure_time=[1000, 10000, 50000])
+        cam_ids=0, number_of_images=3, exposure_time=[1000, 10000, 50000]
+    )
     basl_handl.show_results(results)
 
     # test some cams, multi exposure
     results = basl_handl.grab_images_from_cams(
-        cam_ids=[0, 1], number_of_images=3, exposure_time=[1000, 10000, 50000])
+        cam_ids=[0, 1], number_of_images=3, exposure_time=[1000, 10000, 50000]
+    )
     basl_handl.show_results(results)
 
     # test all cams, multi exposure
     results = basl_handl.grab_images_from_cams(
-        number_of_images=3, exposure_time=[1000, 10000, 50000])
+        number_of_images=3, exposure_time=[1000, 10000, 50000]
+    )
     basl_handl.show_results(results)
 
     # --------- Negative tests ---------
@@ -426,8 +456,7 @@ if __name__ == "__main__":
     results = basl_handl.grab_images_from_cams(number_of_images="j")
     basl_handl.show_results(results)
 
-    results = basl_handl.grab_images_from_cams(
-        number_of_images=2, exposure_time=0.1)
+    results = basl_handl.grab_images_from_cams(number_of_images=2, exposure_time=0.1)
     basl_handl.show_results(results)
 
     results = basl_handl.grab_images_from_cams(cam_ids=0.5)
