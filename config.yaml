@@ -1,8 +1,11 @@
-
 # logger
 log:
-  filename: "logs/basler-log.txt" # name of the log file
-  format: '%(asctime)s - %(levelname)s - %(message)s' # format of the logger
+  filename: "../logs/basler-log.txt" # name of the log file
+  format: "%(asctime)s - %(levelname)s - %(message)s" # format of the logger
+
+# cameras data
+data:
+  path_json: "../data/camera_data.json"
 
 # info of cameras
 # see keys at https://docs.baslerweb.com/pylonapi/cpp/namespace_pylon_1_1_key#variable-serialnumberkey
@@ -10,15 +13,27 @@ camera_info:
   - "VendorName"
   - "ModelName"
   - "IpAddress"
-  # - "MacAddress"
-  
+  - "SerialNumber"
+  - "MacAddress"
+
+# keys used to match current cameras with configured ones
+match_keys:
+  - "SerialNumber"
+  - "MacAddress"
+
 # image grabber
 grab:
-  max_image_num: 50                 # maximum number of consecutive images to grab
-  max_attempts: 5                   # maximum number of attempts while grabbing an image
-  timeout: 5000                     # timeout for waiting a grab result
-  exposure_time_default: 20000      # default exposure time
-  fps: 60                           # fps value for the video stream
-  exposure_range: [20, 100000]      # range of possible values for the exposure time
+  max_image_num: 50 # maximum number of consecutive images to grab
+  max_attempts: 5 # maximum number of attempts while grabbing an image
+  timeout: 5000 # timeout for waiting a grab result
+  exposure_time_default: 50000 # default exposure time
+  fps: 60 # fps value for the video stream
+  autoexposure:
+    brightness_val: 0.1 # target brightness value for autoexposure
+    brightness_thresh: 0.05 # brightness threshold
 
-
+# saved results
+results:
+  dir: "../data/results"
+  path_json: "../data/results/results.json"
+  max_result_num: 100

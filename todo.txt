@@ -1,5 +1,0 @@
-Autoexposure
-lista di richieste (mapping univoco degli id)
-command line
-
-HDR (not yet)
