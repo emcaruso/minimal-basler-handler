@@ -53,7 +53,7 @@ class CameraCLI(cmd.Cmd):
 
     def do_list_cameras(self, _):
         "List configured cameras"
-        self.bh.list_cameras()
+        self.bh.log_cameras()
 
     def do_configure_cameras(self, _):
         "Make and store a new camera configuration"
@@ -133,7 +133,7 @@ class CameraCLI(cmd.Cmd):
 
     def do_list_images_info(self, _):
         "List info on captured images"
-        self.bh.list_images_info()
+        self.bh.log_images_info()
 
     def do_show_images(self, _):
         "Show captured images"

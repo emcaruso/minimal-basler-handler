@@ -1,43 +1,42 @@
 #  Minimal Basler Handler
 
-### installation
-Required packages are listed in the *requirements.txt* file
-```
-pip install -r requirements.txt
-```
-### How to run?
+A simple library to interact with Basler Cameras. It provides image capturing and video stream visualization.
 
-The file *basler_handler.py* contains a class *BaslerHandler* capable of interacting with connected Basler cameras. To instantiate an object of such class, a path to a .yaml config file (like *config.yaml*) must be passed to the constructor:
-```
-basler_handler = BaslerHandler( "path_to_config.yaml" )
-```
-The main methods are:
+### Pre-Requisites
 
-- **log_devices_info()**
-Log and show on terminal informations about the available cameras connected. Logs are saved in the file specified in the config file.
+- Linux OS and Python3 are required.
 
-- **show_camera_stream(cam_id, exposure_time)**
-Display the image stream related to the camera represented by the camera id, which is an int value ( to know camera ids, look at the log coming from *log_devices_info()* ). The exposure time argument is the amount of time in microseconds for grabbing images. The *fps* value of the stream is the one reported in the config file. To exit from the stream visualization, press Q on the keyboard.
+- Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator provided by the Pylon SDK can be used: [https://docs.baslerweb.com/software-installation-(linux)].
 
-- **grab_images_from_cams( number_of_images, exposure_time, cam_ids)**
-grab one or more images from one or more cams. By default, *number_of_images* is 1, *exposure_time* is the default value in the config file, *cam_ids* is None, meaning that all the available cameras will be used. The *exposure_time* argument (expressed in microseconds), can be also a list with the same length of *number_of_images*: i.e. each image will be grabbed with a different exposure time. Also *cam_ids* can be a list of different cam ids.
-This function, returns the grab result as a list of dictionaries, where each dictionary is the outcome of a grab operation and it contains the camera id, the exposure time, the image number and some device info.  The dictionary also contains a 'success' key, if it's false an error occurred, and its description will be inserted in the 'error_msg' field.
-\
-Below some examples: 
-\
-All cameras, grab an image with the default exposure time value:\
-```basler_handle.grab_images_from_cams()```
-\
-Cameras 0 and 3, grab an image with the default exposure time value:\
-```basler_handle.grab_images_from_cams( cam_ids = [0, 3] )```
-\
-All cameras, grab two images with exposure times 10000 and 50000\
-```basler_handle.grab_images_from_cams( number_of_images = 2, exposure_time = [10000, 50000] )```
-\
-Camera 2, grab five images with exposure time 10000\
-```basler_handle.grab_images_from_cams( number_of_images = 5, exposure_time = 10000, cam_ids = 2 )```
+### Demo
 
-- **show_results( results )**
-This function is a simple visualizer of the outputs coming from the function *grab_images_from_cams*. It will display all the images contained in the results.
+A CLI for demonstrations can be executed by running the bash script *run.sh*. The CLI leverages the BaslerHandler class defined in the *basler_handler.py* file.
 
-If the *basler_handler.py* file is executed, some methods of the class are called for qualitative tests.
+To get a more detailed description of the available commands, type *help*, followed by the command.
+
+## Camera Configuration
+
+To acquire images inside the CLI, first a camera configuration is needed by executing the *configure_cameras* command. It will assign ids to available cameras and will store the configuration.
+
+The current configuration can be diplayed with the *list_cameras* command.
+
+All commands for image capturing and video stream visualization rely on camera ids belonging to the saved configuration.
+
+To make a new configuration, just redo the *configure_cameras* command.
+
+## Show camera stream
+
+To show the camera stream, use the *show_camera_stream* command, passing the camera id as argument. The stream will be displayed until the user presses the Q key.
+
+## Capture images
+
+To capture images, use the *grab_images* command, passing the camera ids and the exposure time. The grabbed images will be stored on disk.
+
+To a better description of the command, type *help grab_images*
+
+To list information about all the stored images, use the *list_images* command.
+
+To show all the stored images, use the *show_images* command.
+
+To rmove all the stored images, use the *remove_images* command.
+

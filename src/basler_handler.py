@@ -177,6 +177,10 @@ class BaslerHandler:
         Args:
             cam_id: id of the camera that has to grab images
             exposure_time: exposure time to set
+                           can be an int, indicating the exposure time in microseconds to apply
+                           if 'auto', auto exposure is used
+                           if None, it is set to 'auto'
+
 
         """
 
@@ -219,9 +223,9 @@ class BaslerHandler:
         Args:
             cam_id: camera id related to the camera that has to grab the image
             exposure_time: exposure time used when acquiring images
-                           if "auto", auto exposure is used
-                           if "hdr", hdr mode is used
-                           if None, exposure time is set to its default value defined in the config file
+                           can be an int, indicating the exposure time in microseconds to apply
+                           if 'auto', auto exposure is used
+                           if None, it is set to 'auto'
 
         Returns:
             result: a dictionary containing, the camera id, the exposure time, the grabbed image and the device info.
@@ -232,7 +236,6 @@ class BaslerHandler:
         # if needed set the default exposure time
         if exposure_time is None:
             exposure_time = "auto"
-            # exposure_time = int(self._cfg.grab.exposure_time_default)
 
         # control on input types
         error_msg = None
@@ -408,16 +411,17 @@ class BaslerHandler:
         Args:
             number_of_images: number of images that each camera must grab, 1 by default
             exposure_time: exposure time in microseconds used when acquiring images
-                           can be an int, indicating the exposure time to apply
+                           can be an int, indicating the exposure time in microseconds to apply
                            can be a list of ints, indicating the exposure time for each image (length must match with number of images)
-                           if None, it is set to default value in the config file
-            cam_ids: the camera ids related to the cameras we want to use to grab images
+                           if 'auto', auto exposure is used
+                           if None, it is set to 'auto'
+            cam_ids: The camera ids related to the cameras we want to use to grab images
                      it can be an int, indicating a camera index
                      it can be a list of ints, indicating multiple cameras
                      if None, all available cameras will be involved
 
         Returns:
-            results: the grab result, which is a list of dictionaries.
+            results: The grab result, which is a list of dictionaries.
                      Each dictionary contains the grabbed image and other informations like
                      the camera id, the exposure time, the image number, the grabbed image and the device info.
                      the dictionary also contains a 'success' key, if it's false, an error occurred, and its description
@@ -430,10 +434,6 @@ class BaslerHandler:
         # load devices
         self._load_devices()
 
-        # # control on configured cameras
-        # if not self._check_configured_cameras():
-        #     return False
-        #
         # control on number of images
         error_msg = None
         if not isinstance(number_of_images, int):
@@ -487,9 +487,10 @@ class BaslerHandler:
         shutil.rmtree(self._cfg.results.path_json, ignore_errors=True)
         self._log.info("Captured images removed from disk\n")
 
-    def configure_cameras(self) -> bool:
+    def configure_cameras(self) -> None:
         """
         Configure cameras with the settings defined in the config file
+        It will also assign camera ids to cameras.
 
         Returns:
             True if the cameras have been configured successfully
@@ -513,16 +514,14 @@ class BaslerHandler:
         self._load_configured_cams()
 
         # log
-        self.list_cameras()
+        self.log_cameras()
 
         # clear stored results
         self.remove_images()
 
-        return True
-
-    def list_cameras(self) -> None:
+    def log_cameras(self) -> None:
         """
-        Logs information of available devices
+        Logs information of available devices, both configured cameras and current ones
         """
 
         # pretty table
@@ -559,11 +558,15 @@ class BaslerHandler:
 
     def show_camera_stream(self, cam_id: int, exposure_time: int = None) -> bool:
         """
-        Displays a camera stream associated to camera related to the given id.
+        Displays a camera stream associated to camera related to its id.
+        Ids are configured by running configure_cameras() method.
+        Run log_cameras() to see the camera ids.
         Press 'q' to end the stream
 
         Args:
             cam_id: The id of the camera
+            Ids are configured by running configure_cameras() method.
+            Run log_cameras() to see the camera ids.
 
         Returns:
             False or True wether an error occurred or not
@@ -571,10 +574,6 @@ class BaslerHandler:
 
         # load devices
         self._load_devices()
-
-        # # control on configured cameras
-        # if not self._check_configured_cameras():
-        #     return False
 
         camera = self._get_cam_from_id(cam_id)
 
@@ -623,26 +622,28 @@ class BaslerHandler:
         exposure_time: Union[int, List[int]] = None,
         cam_ids: Union[int, List[int]] = None,
         replace: bool = False,
-    ) -> List[Dict]:
+    ) -> List[ImageBasler]:
         """
         Grab one or multiple images with one or more cameras, and store them in the results directory
 
         Args:
             number_of_images: number of images that each camera must grab, 1 by default
-            exposure_time: exposure time in microseconds used when acquiring images
-                           can be an int, indicating the exposure time to apply
+            exposure_time: exposure time used when acquiring images
+                           can be an int, indicating the exposure time in microseconds to apply
                            can be a list of ints, indicating the exposure time for each image (length must match with number of images)
-                           if None, it is set to default value in the config file
-            cam_ids: the camera ids related to the cameras we want to use to grab images
+                           if None, it is set to 'auto'
+            cam_ids: The camera ids related to the cameras we want to use to grab images
                      it can be an int, indicating a camera index
                      it can be a list of ints, indicating multiple cameras
                      if None, all available cameras will be involved
+                     Ids are configured by running configure_cameras() method.
+                     Run log_cameras() to see the camera ids.
 
         Returns:
-            results: the grab result, which is a list of dictionaries.
+            results: The grab result, which is a list of ImageBasler objects.
                      Each dictionary contains the grabbed image and other informations like
                      the camera id, the exposure time, the image number, the grabbed image and the device info.
-                     the dictionary also contains a 'success' key, if it's false, an error occurred, and its description
+                     The dictionary also contains a 'success' key, if it's false, an error occurred, and its description
                      will be inserted in the 'error_msg' field.
         """
 
@@ -672,7 +673,10 @@ class BaslerHandler:
             with open(self._cfg.results.path_json, "w") as f:
                 json.dump(data, f, indent=4)
 
-    def list_images_info(self) -> bool:
+    def log_images_info(self) -> bool:
+        """
+        log info about all the collected images in the results directory
+        """
 
         # check if results are stored
         if not os.path.exists(self._cfg.results.path_json):
@@ -700,6 +704,9 @@ class BaslerHandler:
         return True
 
     def show_images(self) -> bool:
+        """
+        show images stored in the results directory
+        """
         # check if results are stored
         if not os.path.exists(self._cfg.results.path_json):
             self._log.info("No results stored yet\n")
