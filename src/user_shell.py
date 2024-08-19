@@ -98,7 +98,7 @@ class CameraCLI(cmd.Cmd):
             'capture': without arguments, camera ids and exposure time will be prompted intearctively
         """
 
-        if arg is "":
+        if arg == "":
             # get cam ids interactively
             print("Enter cam ids:")
             cam_ids = input()
@@ -142,6 +142,8 @@ class CameraCLI(cmd.Cmd):
     def do_remove_images(self, _):
         "Remove captured images from disk"
         self.bh.remove_images()
+
+    # exit command
 
     def do_exit(self, _):
         "Quit CLI"

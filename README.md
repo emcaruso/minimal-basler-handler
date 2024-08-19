@@ -6,12 +6,13 @@ A simple library to interact with Basler Cameras. It provides image capturing an
 
 - Linux OS and Python3 are required.
 
-- Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator provided by the Pylon SDK can be used: [https://docs.baslerweb.com/software-installation-(linux)].
+- Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator app, provided by the Pylon SDK, can be used to configure camera IP addresses: [https://docs.baslerweb.com/software-installation-(linux)].
 
 ### Demo
 
 A CLI for demonstrations can be executed by running the bash script *run.sh*. The CLI leverages the BaslerHandler class defined in the *basler_handler.py* file.
 
+To list available commands, type *help* or *?*.
 To get a more detailed description of the available commands, type *help*, followed by the command.
 
 ## Camera Configuration
