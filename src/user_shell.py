@@ -88,15 +88,15 @@ class CameraCLI(cmd.Cmd):
 
         Args:
             camera ids: int, the ids of the cameras to capture images from
-            exposure time: int, the exposure time for the cameras, in microseconds
-                           if set to 'auto', the cameras will use auto exposure
-        camera ids and exposure time have to be separated by a comma
 
         Examples:
-            'capture 0 2, 10000': captures an image on camera 0 and 2, with an exposure time of 10000
-            'capture 1, auto': captures an image on camera 1, using auto exposure
-            'capture': without arguments, camera ids and exposure time will be prompted intearctively
+            'capture 0 2': captures an image on camera 0 and 2
+            'capture 1': captures an image on camera 1
         """
+
+        # exposure time: int, the exposure time for the cameras, in microseconds
+        #                if set to 'auto', the cameras will use auto exposure
+        # 'capture': without arguments, camera ids and exposure time will be prompted intearctively
 
         if arg == "":
             # get cam ids interactively
@@ -117,19 +117,20 @@ class CameraCLI(cmd.Cmd):
         else:
             # argument check
             try:
-                cam_ids, exposure_time = arg.split(",")
+                cam_ids = arg
             except:
                 print(
                     "Invalid argument, put a sequence of camera ids and an exposure time value, separated by a comma"
                 )
                 return False
             cam_ids = parse(cam_ids, int)
-            exposure_time = get_exposure_time(exposure_time)
-            if exposure_time is None:
-                return False
+            # exposure_time = get_exposure_time(exposure_time)
+            # if exposure_time is None:
+            #     return False
 
         # capture
-        self.bh.capture(cam_ids=cam_ids, exposure_time=exposure_time)
+        # self.bh.capture(cam_ids=cam_ids, exposure_time=exposure_time)
+        self.bh.capture(cam_ids=cam_ids, exposure_time=1)
 
     def do_list_images_info(self, _):
         "List info on captured images"

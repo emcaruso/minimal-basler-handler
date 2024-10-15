@@ -99,10 +99,10 @@ class BaslerHandler:
         # default dict of dictionaries
         devices_info = defaultdict(lambda: defaultdict(dict))
 
-        for count, device in enumerate(self._devices):  # for each cam
+        for cam_id, device in enumerate(self._devices):  # for each cam
 
             # camera name
-            key = "camera_" + str(count)
+            key = "camera_" + str(cam_id)
 
             # insert devices_info defined in config into the dictionary
             for info_key in self._cfg.camera_info:
@@ -110,6 +110,7 @@ class BaslerHandler:
                 if getattr(device, "Is" + info_key + "Available")():
                     info = getattr(device, "Get" + info_key)()
                 devices_info[key][info_key] = info
+            devices_info[key]["cam_id"] = cam_id
 
         return devices_info
 
@@ -174,7 +175,7 @@ class BaslerHandler:
         Set exposure time of a camera given its id
 
         Args:
-            camera: camera object
+            cam_id: id of the camera that has to grab images
             exposure_time: exposure time to set
                            can be an int, indicating the exposure time in microseconds to apply
                            if 'auto', auto exposure is used
@@ -214,13 +215,13 @@ class BaslerHandler:
         self._cam_array.Close()
 
     def _grab_basic(
-        self, cam_iden: str, exposure_time: Union[int, str] = None, log=True
+        self, cam_id: int, exposure_time: Union[int, str] = None, log=True
     ) -> dict:
         """
         Grab one image from a camera.
 
         Args:
-            cam_iden: camera identifier related to the camera that has to grab the image
+            cam_id: camera id related to the camera that has to grab the image
             exposure_time: exposure time used when acquiring images
                            can be an int, indicating the exposure time in microseconds to apply
                            if 'auto', auto exposure is used
@@ -240,18 +241,19 @@ class BaslerHandler:
         error_msg = None
         if self._n_devices_configured == 0:
             error_msg = "No cameras configured, run configure_cameras() method"
-        if error_msg is None and not isinstance(cam_iden, str):
-            error_msg = f"cam_iden must be a string"
+        if error_msg is None and not isinstance(cam_id, int):
+            error_msg = f"cam_id must be an int value"
         if error_msg is None and not isinstance(exposure_time, int):
             if not exposure_time in ["auto", "hdr", "default"]:
                 error_msg = f"exposure time must be an int value, or 'auto' or 'default'"  # or 'hdr'"
         # control on input ranges
-        if error_msg is None and not (cam_iden in self._devices_info_configured.keys()):
-
+        if error_msg is None and not (
+            cam_id >= 0 and cam_id < self._n_devices_configured
+        ):
             error_msg = f"Cam ids must be between 0 and the number of devices ({self._n_devices_configured})"
 
-        # control on cam_iden
-        camera = self._get_cam_from_iden(cam_iden)
+        # control on cam_id
+        camera = self._get_cam_from_id(cam_id)
         if isinstance(camera, str):
             error_msg = camera
         elif not camera.IsOpen():
@@ -274,7 +276,7 @@ class BaslerHandler:
             self._log.error(error_msg)
             return ImageBasler.init_error({}, error_msg)
 
-        device_info = self._devices_info_configured[cam_iden]
+        device_info = self._devices_info_configured["camera_" + str(cam_id)]
         max_attempts = self._cfg.grab.max_attempts
 
         # try:
@@ -296,13 +298,14 @@ class BaslerHandler:
 
             # image grabbed successfully?
             if grabResult.GrabSucceeded():
+                cam_id = grabResult.GetCameraContext()
                 img = self._converter.Convert(grabResult).GetArray()
                 grabResult.Release()
 
                 # log
                 if log:
                     self._log.info(
-                        f"Grab successful: Cam: {cam_iden}, exposure_time: {str(exposure_time)}"
+                        f"Grab successful: Cam: {str(cam_id)}, exposure_time: {str(exposure_time)}"
                     )
                 break
 
@@ -317,7 +320,6 @@ class BaslerHandler:
         grabResult.Release()
         image_info = {
             "success": True,
-            "iden": cam_iden,
             # "exposure_time": camera.ExposureTime.GetValue(),
             "autoexposure": exposure_time == "auto",
         }
@@ -352,7 +354,7 @@ class BaslerHandler:
             self._n_devices_configured = len(self._devices_info_configured)
             return False
 
-    def _get_cam_from_iden(self, cam_iden: str) -> Union[pylon.InstantCamera, str]:
+    def _get_cam_from_id(self, cam_id: int) -> Union[pylon.InstantCamera, str]:
         """
         Get the camera object from the given id
 
@@ -365,23 +367,23 @@ class BaslerHandler:
         err_msg = None
         if self._n_devices_configured == 0:
             err_msg = "No cameras configured yet, run configure_cameras() method"
-        elif cam_iden.__class__ != str:
-            err_msg = "cam_iden must be a string , not " + str(cam_iden.__class__)
-        elif not cam_iden in self._devices_info_configured.keys():
-            err_msg = f"The configured camera {cam_iden} is not available"
+        elif cam_id.__class__ != int:
+            err_msg = "cam_id must be an int value, not " + str(cam_id.__class__)
+        elif cam_id >= self._n_devices_configured or cam_id < 0:
+            err_msg = f"The configured camera {cam_id} is not available"
 
         if err_msg is not None:
             return err_msg
 
         # get configured infos
-        cam_info = self._devices_info_configured[cam_iden]
+        cam_info = self._devices_info_configured["camera_" + str(cam_id)]
 
         # find the match of info in the current devices
         for _, d in self._devices_info_current.items():
             if all([d[key] == cam_info[key] for key in self._cfg.match_keys]):
-                return self._cam_array[d["cam_idx"]]
+                return self._cam_array[d["cam_id"]]
 
-        return f"The configured camera '{cam_iden}' is not available"
+        return f"The configured camera {cam_id} is not available"
 
     def _check_configured_cameras(self) -> Tuple[bool, str]:
         """
@@ -403,7 +405,7 @@ class BaslerHandler:
         self,
         number_of_images: int = 1,
         exposure_time: Union[int, List[int]] = None,
-        cam_idens: Union[str, List[str]] = None,
+        cam_ids: Union[int, List[int]] = None,
     ) -> List[Dict]:
         """
         Grab one or multiple images with one or more cameras
@@ -415,9 +417,9 @@ class BaslerHandler:
                            can be a list of ints, indicating the exposure time for each image (length must match with number of images)
                            if 'auto', auto exposure is used
                            if None, it is set to 'auto'
-            cam_idens: The camera identifiers related to the cameras we want to use to grab images
-                     it can be a string, indicating a camera identifier
-                     it can be a list of strings, indicating multiple cameras
+            cam_ids: The camera ids related to the cameras we want to use to grab images
+                     it can be an int, indicating a camera index
+                     it can be a list of ints, indicating multiple cameras
                      if None, all available cameras will be involved
 
         Returns:
@@ -453,17 +455,17 @@ class BaslerHandler:
             return error_msg
 
         # set cam ids
-        if cam_idens is None:
-            cam_idens = list(self._devices_info_configured.keys())
-        if cam_idens.__class__ != list:
-            cam_idens = [cam_idens]
+        if cam_ids is None:
+            cam_ids = list(range(self._n_devices_configured))
+        if cam_ids.__class__ != list:
+            cam_ids = [cam_ids]
 
         # grab images
         results = []
-        data = itertools.product(list(range(number_of_images)), cam_idens)
+        data = itertools.product(list(range(number_of_images)), cam_ids)
         timestamp = str(datetime.datetime.now())[:-7]
-        for j, cam_iden in data:
-            image_basler = self._grab_basic(cam_iden, exposure_time[j])
+        for j, cam_id in data:
+            image_basler = self._grab_basic(cam_id, exposure_time[j])
             image_basler.image_info = {
                 "timestamp": timestamp,
                 **image_basler.image_info,
@@ -499,20 +501,11 @@ class BaslerHandler:
 
         self._log.info("Configuring cameras...")
 
-        self._load_configured_cams()
-        devices_info_old = self._devices_info_configured
-
         # load devices
         self._load_devices()
 
         # new devices info
         devices_info_configured = self._devices_info_current
-
-        # find matched devices with old configuration
-        for k_old, d_old in devices_info_old.items():
-            for k_new, d_new in devices_info_configured.items():
-                if all([d_old[key] == d_new[key] for key in self._cfg.match_keys]):
-                    devices_info_configured[k_new] = devices_info_old.pop(k_old)
 
         # save devices configured to the json file
         os.makedirs(os.path.dirname(self._cfg.data.path_json), exist_ok=True)
@@ -556,7 +549,7 @@ class BaslerHandler:
             # remove cam ids for clarity
             devices_info_copy = deepcopy(devices_info_current)
             for key in devices_info_copy.keys():
-                devices_info_copy[key].pop("cam_idx")
+                devices_info_copy[key].pop("cam_id")
 
             # log
             self._log.warning(
@@ -568,7 +561,7 @@ class BaslerHandler:
                 + "\nExecute configure_cameras() method to update the configuration\n"
             )
 
-    def show_camera_stream(self, cam_iden: str, exposure_time: int = None) -> bool:
+    def show_camera_stream(self, cam_id: int, exposure_time: int = None) -> bool:
         """
         Displays a camera stream associated to camera related to its id.
         Ids are configured by running configure_cameras() method.
@@ -576,7 +569,7 @@ class BaslerHandler:
         Press 'q' to end the stream
 
         Args:
-            cam_iden: The identifier of the camera
+            cam_id: The id of the camera
             Ids are configured by running configure_cameras() method.
             Run log_cameras() to see the camera ids.
 
@@ -587,7 +580,7 @@ class BaslerHandler:
         # load devices
         self._load_devices()
 
-        camera = self._get_cam_from_iden(cam_iden)
+        camera = self._get_cam_from_id(cam_id)
 
         # handle errors
         if isinstance(camera, str):
@@ -605,13 +598,13 @@ class BaslerHandler:
         self._set_fps(camera, self._cfg.grab.fps)
 
         # streaming loop
-        self._log.info(f"Image stream started (camera: {cam_iden})")
-        image_name = f"Stream of camera: {cam_iden}"
+        self._log.info(f"Image stream started (camera: {str(cam_id)})")
+        image_name = f"Stream of camera: {cam_id}"
         cv2.namedWindow(image_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(image_name, 800, 800)
-        self._grab_basic(cam_iden, exposure_time, log=False)
+        self._grab_basic(cam_id, exposure_time, log=False)
         while True:
-            image_basler = self._grab_basic(cam_iden, "default", log=False)
+            image_basler = self._grab_basic(cam_id, "default", log=False)
 
             # handle errors
             if image_basler.success() is False:
@@ -624,7 +617,7 @@ class BaslerHandler:
                 self._stop_cams()
                 cv2.destroyAllWindows()
                 break
-        self._log.info(f"Image stream ended (camera: {cam_iden})\n")
+        self._log.info(f"Image stream ended (camera: {str(cam_id)})\n")
 
         return True
 
@@ -632,7 +625,7 @@ class BaslerHandler:
         self,
         number_of_images: int = 1,
         exposure_time: Union[int, List[int]] = None,
-        cam_idens: Union[str, List[str]] = None,
+        cam_ids: Union[int, List[int]] = None,
         replace: bool = False,
     ) -> List[ImageBasler]:
         """
@@ -644,11 +637,12 @@ class BaslerHandler:
                            can be an int, indicating the exposure time in microseconds to apply
                            can be a list of ints, indicating the exposure time for each image (length must match with number of images)
                            if None, it is set to 'auto'
-            cam_idens: The camera identifiers related to the cameras we want to use to grab images
-                    it can be a string, indicating a camera identifier
-                     it can be a list of strings, indicating multiple cameras
+            cam_ids: The camera ids related to the cameras we want to use to grab images
+                     it can be an int, indicating a camera index
+                     it can be a list of ints, indicating multiple cameras
                      if None, all available cameras will be involved
-                     Run log_cameras() to see the camera identifiers.
+                     Ids are configured by running configure_cameras() method.
+                     Run log_cameras() to see the camera ids.
 
         Returns:
             results: The grab result, which is a list of ImageBasler objects.
@@ -663,9 +657,7 @@ class BaslerHandler:
             self.remove_images()
 
         # grab
-        results = self._grab_images_from_cams(
-            number_of_images, exposure_time, cam_idens
-        )
+        results = self._grab_images_from_cams(number_of_images, exposure_time, cam_ids)
 
         # save images in the results
         for image_basler in results:

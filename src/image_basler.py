@@ -40,7 +40,7 @@ class ImageBasler:
 
     def show_img(self) -> None:
         if self.image_info["success"]:
-            image_name = f"cam: {self.image_info['cam_id']}, timestamp: {self.image_info['timestamp']}"
+            image_name = f"cam: {self.image_info['cam_iden']}, timestamp: {self.image_info['timestamp']}"
             cv2.namedWindow(image_name, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(image_name, 800, 800)
             cv2.imshow(image_name, self.image)
@@ -73,8 +73,7 @@ class ImageBasler:
 
         key_order = [
             "timestamp",
-            "cam_id",
-            "exposure_time",
+            # "exposure_time",
             "autoexposure",
             "image_path",
             "success",
@@ -83,7 +82,7 @@ class ImageBasler:
 
         if not self.image_info["success"] == False:
 
-            image_name = f"{self.image_info['timestamp'].replace(' ','_')};cam_{self.image_info['cam_id']}"
+            image_name = f"{self.image_info['timestamp'].replace(' ','_')};cam_{self.image_info['cam_iden']}"
             images_dir = os.path.join(self.results_dir, "images")
 
             os.makedirs(self.results_dir, exist_ok=True)
@@ -91,7 +90,6 @@ class ImageBasler:
 
             # add image path to image info
             image_path = f"{images_dir}/{image_name}.png"
-            self.image_info["cam_id"] = self.image_info["cam_id"]
             self.image_info["image_path"] = image_path
             self.image_info["error_msg"] = None
 
@@ -99,9 +97,9 @@ class ImageBasler:
             cv2.imwrite(image_path, self.image)
 
         else:
-            self.image_info["cam_id"] = None
-            self.image_info["exposure_time"] = None
-            self.image_info["autoexposure"] = None
+            self.image_info["cam_iden"] = None
+            # self.image_info["exposure_time"] = None
+            # self.image_info["autoexposure"] = None
             self.image_info["image_path"] = None
 
         self.image_info = {k: self.image_info[k] for k in key_order}

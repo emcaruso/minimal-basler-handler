@@ -1,0 +1,8 @@
+- add cam_ident
+- manual id set
+X image in browser
+X add resources
+X   - cam_info
+X   - image_info
+X     /camera/{ident}/cam_info
+X     /camera/{ident}/image_info
