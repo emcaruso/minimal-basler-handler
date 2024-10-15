@@ -72,8 +72,9 @@ class ImageBasler:
     def save(self) -> True:
 
         key_order = [
+            "cam_iden",
             "timestamp",
-            # "exposure_time",
+            "exposure_time",
             "autoexposure",
             "image_path",
             "success",
@@ -97,10 +98,11 @@ class ImageBasler:
             cv2.imwrite(image_path, self.image)
 
         else:
-            self.image_info["cam_iden"] = None
-            # self.image_info["exposure_time"] = None
-            # self.image_info["autoexposure"] = None
-            self.image_info["image_path"] = None
+            self.image_info = {k: None for k in key_order}
+            # self.image_info["cam_iden"] = None
+            # # self.image_info["exposure_time"] = None
+            # # self.image_info["autoexposure"] = None
+            # self.image_info["image_path"] = None
 
         self.image_info = {k: self.image_info[k] for k in key_order}
         # create json if not exist

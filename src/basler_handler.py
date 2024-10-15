@@ -1,5 +1,5 @@
 from pypylon import pylon, genicam
-from basler_utils import set_autoexposure, set_exposure, set_fps
+from basler_utils import set_autoexposure, set_exposure, set_fps, get_exposure
 import shutil
 import datetime
 from collections import defaultdict
@@ -79,7 +79,8 @@ class BaslerHandler:
         field_names = [
             "Camera",
         ]
-        field_names += list(devices_info["camera_0"].keys())
+        first_key = next(iter(devices_info))
+        field_names += list(devices_info[first_key].keys())
         table.field_names = field_names
         for key, val in devices_info_copy.items():
             row = [key]
@@ -97,12 +98,14 @@ class BaslerHandler:
         """
 
         # default dict of dictionaries
-        devices_info = defaultdict(lambda: defaultdict(dict))
+        # devices_info = defaultdict(lambda: defaultdict(dict))
+        devices_info = {}
 
         for count, device in enumerate(self._devices):  # for each cam
 
             # camera name
             key = "camera_" + str(count)
+            devices_info[key] = {}
 
             # insert devices_info defined in config into the dictionary
             for info_key in self._cfg.camera_info:
@@ -110,6 +113,7 @@ class BaslerHandler:
                 if getattr(device, "Is" + info_key + "Available")():
                     info = getattr(device, "Get" + info_key)()
                 devices_info[key][info_key] = info
+            devices_info[key]["cam_idx"] = count
 
         return devices_info
 
@@ -317,8 +321,8 @@ class BaslerHandler:
         grabResult.Release()
         image_info = {
             "success": True,
-            "iden": cam_iden,
-            # "exposure_time": camera.ExposureTime.GetValue(),
+            "cam_iden": cam_iden,
+            "exposure_time": get_exposure(camera),
             "autoexposure": exposure_time == "auto",
         }
         image_info.update(device_info)
@@ -345,6 +349,16 @@ class BaslerHandler:
         if os.path.exists(self._cfg.data.path_json):
             with open(self._cfg.data.path_json, "r") as f:
                 self._devices_info_configured = json.load(f)
+
+                # sort this dict of dicts by cam_idx attribute of dicts
+                self._devices_info_configured = {
+                    k: v
+                    for k, v in sorted(
+                        self._devices_info_configured.items(),
+                        key=lambda item: item[1]["cam_idx"],
+                    )
+                }
+
                 self._n_devices_configured = len(self._devices_info_configured)
             return True
         else:
@@ -509,10 +523,13 @@ class BaslerHandler:
         devices_info_configured = self._devices_info_current
 
         # find matched devices with old configuration
+        replace_dict = {}
         for k_old, d_old in devices_info_old.items():
             for k_new, d_new in devices_info_configured.items():
                 if all([d_old[key] == d_new[key] for key in self._cfg.match_keys]):
-                    devices_info_configured[k_new] = devices_info_old.pop(k_old)
+                    replace_dict[k_new] = k_old
+        for k_new, k_old in replace_dict.items():
+            devices_info_configured[k_old] = devices_info_configured.pop(k_new)
 
         # save devices configured to the json file
         os.makedirs(os.path.dirname(self._cfg.data.path_json), exist_ok=True)
@@ -537,13 +554,16 @@ class BaslerHandler:
         """
 
         # pretty table
+        self._load_configured_cams()
         devices_info_configured = self._devices_info_configured
 
         # load new devices
         self._load_devices()
         devices_info_current = self._devices_info_current
 
-        if devices_info_configured == devices_info_current:
+        if list(devices_info_configured.values()) == list(
+            devices_info_current.values()
+        ):
 
             # log
             self._log.info(
@@ -553,11 +573,11 @@ class BaslerHandler:
 
         else:
 
-            # remove cam ids for clarity
+            # # remove cam ids for clarity
             devices_info_copy = deepcopy(devices_info_current)
-            for key in devices_info_copy.keys():
-                devices_info_copy[key].pop("cam_idx")
-
+            # for key in devices_info_copy.keys():
+            #     devices_info_copy[key].pop("cam_idx")
+            #
             # log
             self._log.warning(
                 "Devices changed from saved configuration!\n\n"

@@ -1,7 +1,12 @@
 from pypylon import pylon, genicam
 
 
-def set_autotarget(cmaera: pylon.InstantCamera, target: int):
+def set_auto_target(camera: pylon.InstantCamera, target: int):
+    try:
+        camera.BslColorSpace
+    except:
+        target *= 4
+
     try:
         camera.AutoTargetValue.Value = target
     except:
@@ -23,16 +28,17 @@ def set_autoexposure(
     # maxUpperLimit = camera.AutoExposureTimeUpperLimit.Max
     # camera.AutoExposureTimeLowerLimit.Value = minLowerLimit
     # camera.AutoExposureTimeUpperLimit.Value = maxUpperLimit
+    #
 
     set_auto_target(camera, brightness_val)
     # camera.AutoFunctionROISelector.Value = "ROI1"
     # camera.AutoFunctionProfile.Value = "MinimizeExposureTime"
-    # camera.ExposureAuto.Value = "Once"
-    # camera.GainAuto.Value = "Once"
+    camera.ExposureAuto.Value = "Continuous"
+    camera.GainAuto.Value = "Continuous"
     # camera.BslColorSpace.Value = "Off"
     converter = pylon.ImageFormatConverter()
     converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-    while camera.ExposureAuto.Value == "Once" or camera.GainAuto.Value == "Once":
+    for i in range(15):
         grabResult = camera.RetrieveResult(
             timeout, pylon.TimeoutHandling_ThrowException
         )
@@ -41,12 +47,12 @@ def set_autoexposure(
             brightness = img.mean() / 255
             print(brightness)
 
-            # custom thresholding
-            if abs(brightness - brightness_val) < brightness_thresh:
-                camera.ExposureAuto.Value = "Off"
-                camera.GainAuto.Value = "Off"
-                break
-
+            # # custom thresholding
+            # if abs(brightness - brightness_val) < brightness_thresh:
+            #     camera.ExposureAuto.Value = "Off"
+            #     camera.GainAuto.Value = "Off"
+            #     break
+            #
     # camera.BslLightSourcePresetFeatureEnable.Value = False
     # camera.BslColorSpace.Value = "sRgb"
 
@@ -63,6 +69,10 @@ def set_exposure(camera: pylon.InstantCamera, exposure_time: int):
     """
     set_exposure time for a camera
     """
+
+    exposure_time = min(max(30, exposure_time), 999999)
+    camera.ExposureAuto.Value = "Off"
+    camera.GainAuto.Value = "Off"
     try:
         if camera.ExposureTime.Value != exposure_time:
             camera.ExposureTime.Value = exposure_time

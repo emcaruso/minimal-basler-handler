@@ -8,3 +8,5 @@ setuptools==69.5.1
 wheel==0.43.0
 prettytable==3.11
 pillow==10.3.0
+flask==3.0.3
+flask-restful==0.3.10

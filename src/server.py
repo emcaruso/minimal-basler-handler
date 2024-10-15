@@ -15,47 +15,42 @@ config_path = script_path / ".." / "config.yaml"
 
 class CameraInfo(Resource):
     def __init__(self):
-        # self.bh = BaslerHandler(config_path)
-        pass
+        self.bh = BaslerHandler(config_path)
+        # pass
 
-    def get(self, cam_id):
-
-        # import ipdb
-        # ipdb.set_trace()
-        # cameras_info = self.bh.get_cameras_info()
-        # print(data)
-        # camera_info = cameras_info[cam_id]
-        camera_data = {"dio": "merda"}
-        return jsonify(camera_data)
+    def get(self, cam_iden):
+        cameras_info = self.bh.get_cameras_info()
+        camera_info = cameras_info[cam_iden]
+        # camera_info = {"hello": "world"}
+        return jsonify(camera_info)
 
 
 class ImageInfo(Resource):
     def __init__(self):
-        # self.bh = BaslerHandler(config_path)
-        pass
+        self.bh = BaslerHandler(config_path)
+        # pass
 
-    def get(self, cam_id):
-
-        # import ipdb
-        # ipdb.set_trace()
-        # images_info = self.bh.get_images_info()
-        # image_info = images_info[cam_id]
-        image_info = {"dio": "cano"}
+    def get(self, cam_iden):
+        images_info = self.bh.get_images_info()
+        image_info = images_info[0]
+        # image_info = {"hello": "world"}
         return jsonify(image_info)
 
 
 class Image(Resource):
     def __init__(self):
-        # self.bh = BaslerHandler(config_path)
-        pass
+        self.bh = BaslerHandler(config_path)
+        # pass
 
     # load an image and return it
-    def get(self, cam_id):
+    def get(self, cam_iden):
 
-        # self.bh.remove_images()
-        # self.bh.capture(cam_ids=cam_id, exposure_time="auto")
-        # image_path = str(next(images_path.glob("*.png")).resolve())
-        image_path = "/home/manu/Desktop/download.png"
+        print(cam_iden)
+        self.bh.remove_images()
+        self.bh.capture(cam_idens=cam_iden, exposure_time="auto")
+        images_info = self.bh.get_images_info()
+        image_path = images_info[0]["image_path"]
+        # image_path = "/home/manu/Desktop/download.png"
 
         request_img = send_file(
             image_path,
@@ -63,15 +58,11 @@ class Image(Resource):
         )
         return request_img
 
-        # with open(image_path, "rb") as image_file:
-        #     encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
-        # # return jsonify({"image": None, "data": {"hello": "world"}})
-        # return jsonify({"image": encoded_image, "data": {"hello": "world"}})
 
-
-api.add_resource(Image, "/camera/<int:cam_id>")
-api.add_resource(ImageInfo, "/camera/<int:cam_id>/image_info")
-api.add_resource(CameraInfo, "/camera/<int:cam_id>/camera_info")
+# add resource at endpoint camera/string
+api.add_resource(Image, "/camera/<string:cam_iden>")
+api.add_resource(ImageInfo, "/camera/<string:cam_iden>/image_info")
+api.add_resource(CameraInfo, "/camera/<string:cam_iden>/camera_info")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

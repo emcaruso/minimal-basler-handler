@@ -70,15 +70,15 @@ class CameraCLI(cmd.Cmd):
         """
 
         # argument check
-        cam_id = parse(arg, int)
-        if cam_id is None:
-            print("Invalid argument, put a single camera id")
+        cam_iden = parse(arg, str)
+        if cam_iden is None:
+            print("Invalid argument, put a single camera identifier")
             return False
-        if not check_single_arg(cam_id):
+        if not check_single_arg(cam_iden):
             return False
 
         # show camera stream
-        self.bh.show_camera_stream(cam_id[0])
+        self.bh.show_camera_stream(cam_iden[0])
 
     # capture commands
 
@@ -101,9 +101,9 @@ class CameraCLI(cmd.Cmd):
         if arg == "":
             # get cam ids interactively
             print("Enter cam ids:")
-            cam_ids = input()
-            cam_ids = parse(cam_ids, int)
-            if cam_ids is None:
+            cam_idens = input()
+            cam_idens = parse(cam_idens, str)
+            if cam_idens is None:
                 print("Invalid argument, put a sequence of camera ids")
                 return False
 
@@ -117,20 +117,20 @@ class CameraCLI(cmd.Cmd):
         else:
             # argument check
             try:
-                cam_ids = arg
+                cam_idens, exposure_time = arg.split(",")
             except:
                 print(
                     "Invalid argument, put a sequence of camera ids and an exposure time value, separated by a comma"
                 )
                 return False
-            cam_ids = parse(cam_ids, int)
-            # exposure_time = get_exposure_time(exposure_time)
-            # if exposure_time is None:
-            #     return False
+            cam_idens = parse(cam_idens, str)
+            exposure_time = get_exposure_time(exposure_time)
+            if exposure_time is None:
+                return False
 
         # capture
-        # self.bh.capture(cam_ids=cam_ids, exposure_time=exposure_time)
-        self.bh.capture(cam_ids=cam_ids, exposure_time=1)
+        self.bh.capture(cam_idens=cam_idens, exposure_time=exposure_time)
+        # self.bh.capture(cam_idens=cam_idens, exposure_time=1)
 
     def do_list_images_info(self, _):
         "List info on captured images"
