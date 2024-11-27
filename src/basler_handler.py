@@ -14,6 +14,8 @@ from omegaconf import OmegaConf
 import logging
 from pathlib import Path
 from image_basler import ImageBasler
+from qrcode import QRCodeDetector
+from constants import forbidden_chars_win
 
 
 class BaslerHandler:
@@ -47,6 +49,9 @@ class BaslerHandler:
         else:
             self._log.info("No cameras configured yet, run configure_cameras() method")
 
+        # qrcode detector
+        self.qrcodes = QRCodeDetector(config_path)
+
     def __del__(self) -> None:
         """
         Close the camera array
@@ -56,6 +61,8 @@ class BaslerHandler:
         except:
             {}
         self._log.info("Session ended\n")
+        # del logger
+        del self._log
 
     ########################################
     ############## PROTECTED ###############
@@ -114,6 +121,8 @@ class BaslerHandler:
                     info = getattr(device, "Get" + info_key)()
                 devices_info[key][info_key] = info
             devices_info[key]["cam_idx"] = count
+            devices_info[key]["rotation"] = 0
+            devices_info[key]["exposure_time"] = 30000
 
         return devices_info
 
@@ -322,11 +331,18 @@ class BaslerHandler:
         image_info = {
             "success": True,
             "cam_iden": cam_iden,
-            "exposure_time": get_exposure(camera),
             "autoexposure": exposure_time == "auto",
         }
         image_info.update(device_info)
+        image_info["exposure_time"] = get_exposure(camera)
+
         image_basler = ImageBasler(image_info, img)
+
+        # apply rotation
+        rotation_angle = device_info["rotation"]
+        if "rotation" in device_info.keys():
+            image_basler = image_basler.rotate_image(rotation_angle)
+        #
         return image_basler
 
         # # Error handling
@@ -382,7 +398,7 @@ class BaslerHandler:
         elif cam_iden.__class__ != str:
             err_msg = "cam_iden must be a string , not " + str(cam_iden.__class__)
         elif not cam_iden in self._devices_info_configured.keys():
-            err_msg = f"The configured camera {cam_iden} is not available"
+            err_msg = f"The configured camera '{cam_iden}' is not available"
 
         if err_msg is not None:
             return err_msg
@@ -493,6 +509,67 @@ class BaslerHandler:
     ################ PUBLIC ################
     ########################################
 
+    def set_default_rotation(self, cam_iden: str, rotation_angle: int) -> dict:
+        with open(self._cfg.data.path_json, "r") as f:
+            data = json.load(f)
+        if cam_iden not in data.keys():
+            return {"error: ": f"Camera iden {cam_iden} not found"}
+        if not isinstance(rotation_angle, int):
+            return {
+                "error: ": f"rotation_angle value must be an int",
+            }
+        if rotation_angle not in [0, 90, 180, 270]:
+            return {
+                "error: ": f"rotation_angle value must be 0, 90, 180 or 270",
+            }
+        data[cam_iden]["rotation"] = rotation_angle
+        with open(self._cfg.data.path_json, "w") as f:
+            json.dump(data, f, indent=4)
+        return {}
+
+    def set_default_exposure(self, cam_iden: str, exposure_time: int) -> dict:
+        with open(self._cfg.data.path_json, "r") as f:
+            data = json.load(f)
+
+        if cam_iden not in data.keys():
+            return {"error: ": f"Camera iden {cam_iden} not found"}
+
+        if not isinstance(exposure_time, int) and exposure_time != "auto":
+            return {
+                "error: ": f"exposure_time value must be an int, or the string 'auto'",
+            }
+
+        data[cam_iden]["exposure_time"] = exposure_time
+
+        with open(self._cfg.data.path_json, "w") as f:
+            json.dump(data, f, indent=4)
+        return {}
+
+    def change_camera_iden(self, old_iden: str, new_iden: str) -> dict:
+        if any([c in new_iden for c in forbidden_chars_win]):
+            return {
+                "error: ": f"Camera iden {new_iden} must NOT contain special characters: {forbidden_chars_win}"
+            }
+
+        with open(self._cfg.data.path_json, "r") as f:
+            data = json.load(f)
+        if old_iden not in data.keys():
+            return {"error: ": f"Camera iden {old_iden} not found"}
+
+        # substitute results
+        img_info = self.get_all_img_info()
+        if old_iden in img_info.keys():
+            img_info[new_iden] = img_info.pop(old_iden)
+            for d in img_info[new_iden]:
+                d["cam_iden"] = new_iden
+            with open(self._cfg.results.path_json, "w") as f:
+                json.dump(img_info, f, indent=4)
+
+        data[new_iden] = data.pop(old_iden)
+        with open(self._cfg.data.path_json, "w") as f:
+            json.dump(data, f, indent=4)
+        return {}
+
     def remove_images(self) -> None:
         """
         Clear the results directory
@@ -528,8 +605,16 @@ class BaslerHandler:
             for k_new, d_new in devices_info_configured.items():
                 if all([d_old[key] == d_new[key] for key in self._cfg.match_keys]):
                     replace_dict[k_new] = k_old
+
         for k_new, k_old in replace_dict.items():
-            devices_info_configured[k_old] = devices_info_configured.pop(k_new)
+            info_new = devices_info_configured.pop(k_new)
+            new_dict = {}
+            for k, v in info_new.items():
+                if k in self._cfg.camera_info:
+                    new_dict[k] = v
+                else:
+                    new_dict[k] = devices_info_old[k_old][k]
+            devices_info_configured[k_old] = new_dict
 
         # save devices configured to the json file
         os.makedirs(os.path.dirname(self._cfg.data.path_json), exist_ok=True)
@@ -653,7 +738,6 @@ class BaslerHandler:
         number_of_images: int = 1,
         exposure_time: Union[int, List[int]] = None,
         cam_idens: Union[str, List[str]] = None,
-        replace: bool = False,
     ) -> List[ImageBasler]:
         """
         Grab one or multiple images with one or more cameras, and store them in the results directory
@@ -678,9 +762,8 @@ class BaslerHandler:
                      will be inserted in the 'error_msg' field.
         """
 
-        # replace old results
-        if replace:
-            self.remove_images()
+        if isinstance(cam_idens, str):
+            cam_idens = [cam_idens]
 
         # grab
         results = self._grab_images_from_cams(
@@ -688,25 +771,31 @@ class BaslerHandler:
         )
 
         # save images in the results
-        for image_basler in results:
-            image_basler.save()
+        for i, image_basler in enumerate(results):
+            cam_iden = cam_idens[i]
+            image_basler.save(
+                self._cfg.results.path_json, self._cfg.results.max_result_num
+            )
 
-        # load json file
+        #     # resize result number
+        #     data = json.load(f)
+        #     if len(data[cam_iden]) > self._cfg.results.max_result_num:
+        #         # remove exceeding images
+        #         for d in data[cam_iden][: -self._cfg.results.max_result_num]:
+        #             os.remove(d["image_path"])
+        #
+        #         # update data with resized results
+        #         data[cam_iden] = data[cam_iden][-self._cfg.results.max_result_num :]
+        # with open(self._cfg.results.path_json, "w") as f:
+        #     json.dump(data, f, indent=4)
+        #
+
+    def get_all_img_info(self) -> dict:
         with open(self._cfg.results.path_json, "r") as f:
             data = json.load(f)
+        return data
 
-        # resize result number
-        if len(data) > self._cfg.results.max_result_num:
-            # remove exceeding images
-            for d in data[: -self._cfg.results.max_result_num]:
-                os.remove(d["image_path"])
-
-            # uddate data with resized results
-            data = data[-self._cfg.results.max_result_num :]
-            with open(self._cfg.results.path_json, "w") as f:
-                json.dump(data, f, indent=4)
-
-    def get_images_info(self) -> bool:
+    def get_last_img_info(self, cam_iden: str) -> bool:
         """
         get info about all the collected images in the results directory
         """
@@ -714,36 +803,40 @@ class BaslerHandler:
         # load json file
         with open(self._cfg.results.path_json, "r") as f:
             data = json.load(f)
-        return data
 
-    def log_images_info(self) -> bool:
-        """
-        log info about all the collected images in the results directory
-        """
+        if cam_iden not in data.keys():
+            return {"error": f"No images with camera {cam_iden}"}
 
-        # get images data
-        data = self.get_images_info()
+        return data[cam_iden][-1]
 
-        # check if results are stored
-        if not os.path.exists(self._cfg.results.path_json):
-            self._log.info("No results stored yet\n")
-            return False
-
-        # list of nested dicts to pretty table
-        table = PrettyTable()
-        for d in data:
-            # initialize the table
-            table.field_names = list(d.keys())
-            table.add_row(list(d.values()))
-        table = (
-            "Results stored\n"
-            + str(table)
-            + f"\nTotal number of captured images: {len(data)}\n"
-        )
-
-        # print the table
-        self._log.info(table)
-        return True
+    # def log_images_info(self) -> bool:
+    #     """
+    #     log info about all the collected images in the results directory
+    #     """
+    #
+    #     # get images data
+    #     data = self.get_images_info()
+    #
+    #     # check if results are stored
+    #     if not os.path.exists(self._cfg.results.path_json):
+    #         self._log.info("No results stored yet\n")
+    #         return False
+    #
+    #     # list of nested dicts to pretty table
+    #     table = PrettyTable()
+    #     for d in data:
+    #         # initialize the table
+    #         table.field_names = list(d.keys())
+    #         table.add_row(list(d.values()))
+    #     table = (
+    #         "Results stored\n"
+    #         + str(table)
+    #         + f"\nTotal number of captured images: {len(data)}\n"
+    #     )
+    #
+    #     # print the table
+    #     self._log.info(table)
+    #     return True
 
     def show_images(self) -> bool:
         """

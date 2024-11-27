@@ -1,43 +1,41 @@
 #  Minimal Basler Handler
 
 A simple library to interact with Basler Cameras. It provides image capturing and video stream visualization.
+It provides camera interaction through API Rest or CLI.
 
 ### Pre-Requisites
 
-- Linux OS and Python3 are required.
+- Python3.10 or higher is required.
+- Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator app, is provided by the Basler pylon Software Suite.
+  Download it at: [https://www.baslerweb.com/en/downloads/software/?srsltid=AfmBOorhg4eoJa0glsNgQvtT9hNgEiwgYKa_75ahCTvJ84nN8cgmwdKj].
+  And see the documentation to assign Ip addresses at: [https://docs.baslerweb.com/assigning-an-ip-address-to-a-camera]
 
-- Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator app, provided by the Pylon SDK, can be used to configure camera IP addresses: [https://docs.baslerweb.com/software-installation-(linux)].
+### Installation
+There is no need for an installation. A virtual environment with all the required dependencies is automatically activated (and installed if not present) when running the scripts.
 
-### Demo
+### Run as API Rest service
 
-A CLI for demonstrations can be executed by running the bash script *run.sh*. The CLI leverages the BaslerHandler class defined in the *basler_handler.py* file.
+- Start the server running the *start_server* script (.sh for Linux, .bat for Windows)
+- List Available cameras with the endpoint "IpAddress/list_cameras". It is useful to see camera data, such as the CAMERA_IDENTIFIER for each camera, that is needed to capture images.
+- If cameras are added/removed from the network, save the new configuration with "IpAddress/configure_cameras"
+- To capture an image relative to a camera, use the endpoint "IpAddress/camera/CAMERA_IDENTIFIER".
+- To show the information about the last image captured from a specific camera, use the endpoint "IpAddress/camera/CAMERA_IDENTIFIER/image_info".
+- To show the information about a specific camera, use the endpoint "IpAddress/camera/camera_info".
+- To set the rotation value for a specific camera, use the endpoint "IpAddress/set_rotation/CAMERA_IDENTIFIER/ROTATION", Where ROTATION is an int value in the set {0, 90, 180, 270}, describing the rotation angle in degrees in the clockwise direction.
+- To set the default exposure time value for a specific camera, use the endpoint "IpAddress/set_exposure/CAMERA_IDENTIFIER/EXPOSURE_TIME", Where EXPOSURE_TIME is the integration time for cameras expressed in microseconds. An higher value makes captured images more bright. The proper value depends on how much the location is illuminated. If images are too bright or dark, try to adjust this parameter. The valid exposure time ranges for specific cameras are available at [https://docs.baslerweb.com/exposure-time]
+- To change a camera identifier, use the endpoint "IpAddress/change_iden/OLD_CAMERA_IDENTIFIER/NEW_CAMERA_IDENTIFIER".
+- To decode qrcodes of the last image of a camera, use the endpoint "IpAddress/camera/CAMERA_IDENTIFIER/qrcodes".
 
-To list available commands, type *help* or *?*.
-To get a more detailed description of the available commands, type *help*, followed by the command.
 
-## Camera Configuration
 
-To acquire images inside the CLI, first a camera configuration is needed by executing the *configure_cameras* command. It will assign ids to available cameras and will store the configuration.
+###### Customize camera configuration.
+To customize camera identifiers, exposure times and image rotation values, the file *data/camera_data.json* has to be edited.
+- The *rotation* value, has to be an int value in the set {0, 90, 180, 270}, specifying the angle in degrees to rotate an image in the clockwise direction.
+- the *exposure_time* value, is the integration time for cameras expressed in microseconds. An higher value makes captured images more bright. The proper value depends on how much the location is illuminated. If images are too bright or dark, try to adjust this parameter. The valid exposure time ranges for specific cameras are available at [https://docs.baslerweb.com/exposure-time]
+- The camera identifiers, are the main keys of the file *camera_data.json* file. They can be changed with any string.
 
-The current configuration can be diplayed with the *list_cameras* command.
+### Run with CLI (Command Line Interface)
 
-All commands for image capturing and video stream visualization rely on camera ids belonging to the saved configuration.
-
-To make a new configuration, just redo the *configure_cameras* command.
-
-## Show camera stream
-
-To show the camera stream, use the *show_camera_stream* command, passing the camera id as argument. The stream will be displayed until the user presses the Q key.
-
-## Capture images
-
-To capture images, use the *grab_images* command, passing the camera ids and the exposure time. The grabbed images will be stored on disk.
-
-To a better description of the command, type *help grab_images*
-
-To list information about all the stored images, use the *list_images* command.
-
-To show all the stored images, use the *show_images* command.
-
-To rmove all the stored images, use the *remove_images* command.
+- Start the CLI by running the *run_cli* script (.sh for Linux, .bat for Windows)
+- Type *help* or *?* to list the available commands. With *? COMMAND* where COMMAND is an available command, a short description of such command will be displayed.
 

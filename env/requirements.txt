@@ -10,3 +10,7 @@ prettytable==3.11
 pillow==10.3.0
 flask==3.0.3
 flask-restful==0.3.10
+zxing==1.0.3
+waitress==3.0.2
+ipdb==0.13.13
+pyzbar==0.1.9

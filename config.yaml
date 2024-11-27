@@ -36,4 +36,4 @@ grab:
 results:
   dir: "../data/results"
   path_json: "../data/results/results.json"
-  max_result_num: 100
+  max_result_num: 5
