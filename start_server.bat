@@ -15,3 +15,5 @@ if exist "%SCRIPTPATH%env\.venv\" (
 REM Execute the server
 cd src
 python server.py
+echo Press any key to exit
+pause

@@ -5,7 +5,7 @@ import numpy as np
 from pathlib import Path
 
 # from pyzbar.pyzbar import decode
-# import zxing
+import zxing
 from omegaconf import OmegaConf
 
 
@@ -17,10 +17,9 @@ class QRCodeDetector:
     # combine methods and returns the union of the lists
     def detect_qrcodes(self, image_path: str):
         res = []
-        res += self._detect_qrcodes_cv2(image_path)
+        # res += self._detect_qrcodes_cv2(image_path)
         # res += self._detect_qrcodes_pyzbar(image_path)
-        # res += self._detect_qrcodes_zxing(image_path)
-        # return list(set(res_cv2 + res_pyz + res_zxing))
+        res += self._detect_qrcodes_zxing(image_path)
         return list(set(res))
 
     def _detect_qrcodes_zxing(self, image_path: str, res_old=[]):
@@ -34,7 +33,7 @@ class QRCodeDetector:
         # Decode the QR codes in the image
         res = reader.decode(image_path)
 
-        if res.points is not None:
+        if res.points != []:
             x_min = int(min([p[0] for p in res.points]))
             x_max = int(max([p[0] for p in res.points]))
             y_min = int(min([p[1] for p in res.points]))

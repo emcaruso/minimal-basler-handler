@@ -8,10 +8,20 @@ def set_auto_target(camera: pylon.InstantCamera, target: int):
         target *= 4
 
     try:
-        camera.AutoTargetValue.Value = target
+        camera.AutoTargetValue.SetValue( target )
     except:
-        camera.AutoTargetBrightness.Value = target
+        try:
+            camera.AutoTargetBrightness.Value = target
+        except:
+            {}
 
+def remove_color_correction(camera: pylon.InstantCamera):
+    try:
+        camera.ColorAdjustmentEnable.Value = False
+        camera.ColorTransformationMatrixFactor.Value = 0
+        camera.ColorTransformationMatrixFactorRaw.Value = 0
+    except:
+        {}
 
 def set_autoexposure(
     camera: pylon.InstantCamera,
@@ -38,7 +48,7 @@ def set_autoexposure(
     # camera.BslColorSpace.Value = "Off"
     converter = pylon.ImageFormatConverter()
     converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-    for i in range(15):
+    for i in range(7):
         grabResult = camera.RetrieveResult(
             timeout, pylon.TimeoutHandling_ThrowException
         )

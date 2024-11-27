@@ -14,4 +14,4 @@ if exist "%SCRIPTPATH%env\.venv\" (
 
 REM Execute the server
 cd src
-start /B python server.py
+start pythonw "./server.py"

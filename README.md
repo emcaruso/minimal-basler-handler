@@ -9,6 +9,7 @@ It provides camera interaction through API Rest or CLI.
 - Pre-configured IP addresses on Basler cameras are required. The Pylon IP Configurator app, is provided by the Basler pylon Software Suite.
   Download it at: [https://www.baslerweb.com/en/downloads/software/?srsltid=AfmBOorhg4eoJa0glsNgQvtT9hNgEiwgYKa_75ahCTvJ84nN8cgmwdKj].
   And see the documentation to assign Ip addresses at: [https://docs.baslerweb.com/assigning-an-ip-address-to-a-camera]
+- For QRCode detection, install the JDK at: https://www.oracle.com/java/technologies/downloads/
 
 ### Installation
 There is no need for an installation. A virtual environment with all the required dependencies is automatically activated (and installed if not present) when running the scripts.
@@ -16,7 +17,8 @@ There is no need for an installation. A virtual environment with all the require
 ### Run as API Rest service
 
 - Start the server running the *start_server* script (.sh for Linux, .bat for Windows)
-- List Available cameras with the endpoint "IpAddress/list_cameras". It is useful to see camera data, such as the CAMERA_IDENTIFIER for each camera, that is needed to capture images.
+- List configured cameras with the endpoint "IpAddress/list_cameras". It is useful to see camera data, such as the CAMERA_IDENTIFIER for each camera, that is needed to capture images.
+- List detectable cameras with the endpoint "IpAddress/list_cameras_detected". It is useful to check if available cameras are different from the configured ones.
 - If cameras are added/removed from the network, save the new configuration with "IpAddress/configure_cameras"
 - To capture an image relative to a camera, use the endpoint "IpAddress/camera/CAMERA_IDENTIFIER".
 - To show the information about the last image captured from a specific camera, use the endpoint "IpAddress/camera/CAMERA_IDENTIFIER/image_info".

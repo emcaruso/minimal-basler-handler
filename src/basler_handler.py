@@ -1,5 +1,5 @@
 from pypylon import pylon, genicam
-from basler_utils import set_autoexposure, set_exposure, set_fps, get_exposure
+from basler_utils import set_autoexposure, set_exposure, set_fps, get_exposure, remove_color_correction
 import shutil
 import datetime
 from collections import defaultdict
@@ -122,7 +122,7 @@ class BaslerHandler:
                 devices_info[key][info_key] = info
             devices_info[key]["cam_idx"] = count
             devices_info[key]["rotation"] = 0
-            devices_info[key]["exposure_time"] = 30000
+            devices_info[key]["exposure_time"] = self._cfg.grab.exposure_time_default
 
         return devices_info
 
@@ -269,6 +269,9 @@ class BaslerHandler:
             error_msg = camera
         elif not camera.IsOpen():
             camera.Open()  # open the camera
+
+        # remove color correction
+        remove_color_correction(camera)
 
         # # control on exposure time range
         # if (

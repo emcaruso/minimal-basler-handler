@@ -98,7 +98,6 @@ class ImageBasler:
             "timestamp",
             "exposure_time",
             "autoexposure",
-            "exposure_time",
             "image_path",
             "success",
             "rotation_angle",
@@ -144,6 +143,8 @@ class ImageBasler:
             else:
                 with open(json_path, "r") as f:
                     data = json.load(f)
+                    if self.image_info["cam_iden"] not in data.keys():
+                        data[self.image_info["cam_iden"]] = []
             data[self.image_info["cam_iden"]].append(self.image_info)
 
             # remove old

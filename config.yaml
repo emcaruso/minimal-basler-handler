@@ -26,11 +26,11 @@ grab:
   max_image_num: 50 # maximum number of consecutive images to grab
   max_attempts: 5 # maximum number of attempts while grabbing an image
   timeout: 5000 # timeout for waiting a grab result
-  exposure_time_default: 50000 # default exposure time
+  exposure_time_default: auto # default exposure time
   fps: 60 # fps value for the video stream
   autoexposure:
-    brightness_val: 0.1 # target brightness value for autoexposure
-    brightness_thresh: 0.05 # brightness threshold
+    brightness_val: 0.05 # target brightness value for autoexposure
+    brightness_thresh: 0.0 # brightness threshold
 
 # saved results
 results:

@@ -83,6 +83,12 @@ class ListCameras(Resource):
         devices_info = bh._devices_info_configured
         return jsonify(devices_info)
 
+class ListCamerasDetected(Resource):
+
+    def get(self):
+        bh._load_devices()
+        devices_info = bh._devices_info_current
+        return jsonify(devices_info)
 
 class ConfigureCameras(Resource):
 
@@ -147,6 +153,7 @@ api.add_resource(Image, "/camera/<string:cam_iden>")
 api.add_resource(ImageInfo, "/camera/<string:cam_iden>/image_info")
 api.add_resource(CameraInfo, "/camera/<string:cam_iden>/camera_info")
 api.add_resource(ListCameras, "/list_cameras")
+api.add_resource(ListCamerasDetected, "/list_cameras_detected")
 api.add_resource(ConfigureCameras, "/configure_cameras")
 api.add_resource(SetExposure, "/set_exposure/<string:cam_iden>/<string:exposure_time>")
 api.add_resource(SetRotation, "/set_rotation/<string:cam_iden>/<string:rotation>")
