@@ -245,6 +245,7 @@ class BaslerHandler:
                     will be inserted in the 'error_msg' field.
         """
 
+
         # if needed set the default exposure time
         if exposure_time is None:
             exposure_time = "auto"

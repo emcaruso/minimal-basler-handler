@@ -29,7 +29,7 @@ grab:
   exposure_time_default: auto # default exposure time
   fps: 60 # fps value for the video stream
   autoexposure:
-    brightness_val: 0.05 # target brightness value for autoexposure
+    brightness_val: 50 # target brightness value for autoexposure
     brightness_thresh: 0.0 # brightness threshold
 
 # saved results

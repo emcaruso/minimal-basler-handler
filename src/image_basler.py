@@ -132,9 +132,10 @@ class ImageBasler:
             # self.image_info["image_path"] = None
 
         if json_path is not None:
+
             # create json if not exist
             os.makedirs(self.results_dir, exist_ok=True)
-            json_path = f"{self.results_dir}/results.json"
+            json_path = os.path.join(f"{self.results_dir}","results.json")
 
             if not os.path.exists(json_path):
                 with open(json_path, "w") as f:

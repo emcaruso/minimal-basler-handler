@@ -2,13 +2,10 @@ from pypylon import pylon, genicam
 
 
 def set_auto_target(camera: pylon.InstantCamera, target: int):
-    try:
-        camera.BslColorSpace
-    except:
-        target *= 4
 
     try:
-        camera.AutoTargetValue.SetValue( target )
+        val = int(target)
+        camera.AutoTargetValue.Value = val
     except:
         try:
             camera.AutoTargetBrightness.Value = target
@@ -17,11 +14,19 @@ def set_auto_target(camera: pylon.InstantCamera, target: int):
 
 def remove_color_correction(camera: pylon.InstantCamera):
     try:
+        camera.BalanceWhiteAuto.Value = "Continuous"
+        camera.GammaSelector.Value = "User"
+        camera.GammaEnable.Value = true
+        camera.Gamma.Value = 0.5
+
+    except:
+        pass
+    try:
         camera.ColorAdjustmentEnable.Value = False
         camera.ColorTransformationMatrixFactor.Value = 0
         camera.ColorTransformationMatrixFactorRaw.Value = 0
     except:
-        {}
+        pass
 
 def set_autoexposure(
     camera: pylon.InstantCamera,
