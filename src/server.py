@@ -50,7 +50,9 @@ class Image(Resource):
 
         devices_info = bh._devices_info_configured
         bh.capture(
-            cam_idens=cam_iden, exposure_time=devices_info[cam_iden]["exposure_time"]
+            cam_idens=cam_iden,
+            exposure_time=devices_info[cam_iden]["exposure_time"],
+            gamma=devices_info[cam_iden]["gamma"],
         )
         # bh._log.info("Reading QR codes")
         # bh.qrcodes.postprocess()
@@ -83,12 +85,14 @@ class ListCameras(Resource):
         devices_info = bh._devices_info_configured
         return jsonify(devices_info)
 
+
 class ListCamerasDetected(Resource):
 
     def get(self):
         bh._load_devices()
         devices_info = bh._devices_info_current
         return jsonify(devices_info)
+
 
 class ConfigureCameras(Resource):
 

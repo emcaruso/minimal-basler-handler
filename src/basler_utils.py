@@ -43,7 +43,7 @@ def set_gamma(camera: pylon.InstantCamera, gamma: float):
     camera.Gamma.Value = gamma
 
 
-def remove_autogain():
+def remove_autogain(camera: pylon.InstantCamera):
     try:
         camera.GainAuto.Value = "Off"
     except:

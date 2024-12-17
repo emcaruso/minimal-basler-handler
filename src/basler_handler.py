@@ -239,8 +239,8 @@ class BaslerHandler:
     def _grab_basic(
         self,
         cam_iden: str,
-        gamma: float = 0.5,
         exposure_time: Union[int, str] = None,
+        gamma: float = 0.5,
         log=True,
     ) -> dict:
         """
@@ -286,10 +286,9 @@ class BaslerHandler:
 
         # remove color correction
         remove_color_correction(camera)
-        # white_balancing(camera, True)
-        self._set_exposure(camera, exposure_time)  # set exposure time
-        # set_gamma(camera, gamma)
-        # remove_autogain()
+        white_balancing(camera, True)
+        set_gamma(camera, gamma)
+        remove_autogain(camera)
 
         if error_msg is not None:
             self._log.error(error_msg)
@@ -302,6 +301,9 @@ class BaslerHandler:
         if not camera.IsGrabbing():
             # start the grabbing
             camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
+
+        # set exposure
+        self._set_exposure(camera, exposure_time)  # set exposure time
 
         # grab loop
         n_attempts = 0
@@ -438,6 +440,7 @@ class BaslerHandler:
         self,
         number_of_images: int = 1,
         exposure_time: Union[int, List[int]] = None,
+        gamma: float = 0.5,
         cam_idens: Union[str, List[str]] = None,
     ) -> List[Dict]:
         """
@@ -498,7 +501,7 @@ class BaslerHandler:
         data = itertools.product(list(range(number_of_images)), cam_idens)
         timestamp = str(datetime.datetime.now())[:-7]
         for j, cam_iden in data:
-            image_basler = self._grab_basic(cam_iden, exposure_time[j])
+            image_basler = self._grab_basic(cam_iden, exposure_time[j], gamma)
             image_basler.image_info = {
                 "timestamp": timestamp,
                 **image_basler.image_info,
@@ -742,6 +745,7 @@ class BaslerHandler:
         self,
         number_of_images: int = 1,
         exposure_time: Union[int, List[int]] = None,
+        gamma: float = 0.5,
         cam_idens: Union[str, List[str]] = None,
     ) -> List[ImageBasler]:
         """
@@ -772,7 +776,10 @@ class BaslerHandler:
 
         # grab
         results = self._grab_images_from_cams(
-            number_of_images, exposure_time, cam_idens
+            number_of_images=number_of_images,
+            exposure_time=exposure_time,
+            cam_idens=cam_idens,
+            gamma=gamma,
         )
 
         # save images in the results
