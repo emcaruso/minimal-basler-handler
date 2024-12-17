@@ -10,23 +10,46 @@ def set_auto_target(camera: pylon.InstantCamera, target: int):
         try:
             camera.AutoTargetBrightness.Value = target
         except:
-            {}
+            pass
+
 
 def remove_color_correction(camera: pylon.InstantCamera):
-    try:
-        camera.BalanceWhiteAuto.Value = "Continuous"
-        camera.GammaSelector.Value = "User"
-        camera.GammaEnable.Value = true
-        camera.Gamma.Value = 0.5
-
-    except:
-        pass
     try:
         camera.ColorAdjustmentEnable.Value = False
         camera.ColorTransformationMatrixFactor.Value = 0
         camera.ColorTransformationMatrixFactorRaw.Value = 0
     except:
         pass
+
+
+def white_balancing(camera: pylon.InstantCamera, on: bool):
+
+    try:
+        if on:
+            camera.BalanceWhiteAuto.Value = "Continuous"
+        else:
+            camera.BalanceWhiteAuto.Value = "Off"
+    except:
+        pass
+    pass
+
+
+def set_gamma(camera: pylon.InstantCamera, gamma: float):
+    try:
+        camera.GammaSelector.Value = "User"
+        camera.GammaEnable.Value = True
+    except:
+        pass
+    camera.Gamma.Value = gamma
+
+
+def remove_autogain():
+    try:
+        camera.GainAuto.Value = "Off"
+    except:
+        pass
+    pass
+
 
 def set_autoexposure(
     camera: pylon.InstantCamera,
@@ -49,7 +72,7 @@ def set_autoexposure(
     # camera.AutoFunctionROISelector.Value = "ROI1"
     # camera.AutoFunctionProfile.Value = "MinimizeExposureTime"
     camera.ExposureAuto.Value = "Continuous"
-    camera.GainAuto.Value = "Continuous"
+    # camera.GainAuto.Value = "Continuous"
     # camera.BslColorSpace.Value = "Off"
     converter = pylon.ImageFormatConverter()
     converter.OutputPixelFormat = pylon.PixelType_BGR8packed

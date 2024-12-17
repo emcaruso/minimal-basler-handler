@@ -1,5 +1,14 @@
 from pypylon import pylon, genicam
-from basler_utils import set_autoexposure, set_exposure, set_fps, get_exposure, remove_color_correction
+from basler_utils import (
+    set_autoexposure,
+    set_exposure,
+    set_fps,
+    get_exposure,
+    remove_color_correction,
+    white_balancing,
+    set_gamma,
+    remove_autogain,
+)
 import shutil
 import datetime
 from collections import defaultdict
@@ -123,6 +132,7 @@ class BaslerHandler:
             devices_info[key]["cam_idx"] = count
             devices_info[key]["rotation"] = 0
             devices_info[key]["exposure_time"] = self._cfg.grab.exposure_time_default
+            devices_info[key]["gamma"] = 0.5
 
         return devices_info
 
@@ -214,9 +224,9 @@ class BaslerHandler:
         else:
             set_exposure(camera, exposure_time)
 
-        camera.Close()
-        camera.Open()
-        camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
+        # camera.Close()
+        # camera.Open()
+        # camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
 
     def _stop_cams(self) -> None:
         """
@@ -227,7 +237,11 @@ class BaslerHandler:
         self._cam_array.Close()
 
     def _grab_basic(
-        self, cam_iden: str, exposure_time: Union[int, str] = None, log=True
+        self,
+        cam_iden: str,
+        gamma: float = 0.5,
+        exposure_time: Union[int, str] = None,
+        log=True,
     ) -> dict:
         """
         Grab one image from a camera.
@@ -244,7 +258,6 @@ class BaslerHandler:
                     The dictionary also contains a 'success' key, if it's false, an error occurred, and its description
                     will be inserted in the 'error_msg' field.
         """
-
 
         # if needed set the default exposure time
         if exposure_time is None:
@@ -273,19 +286,10 @@ class BaslerHandler:
 
         # remove color correction
         remove_color_correction(camera)
-
-        # # control on exposure time range
-        # if (
-        #     error_msg is None
-        #     and isinstance(exposure_time, int)
-        #     and not (
-        #         exposure_time >= camera.ExposureTime.Min
-        #         and exposure_time < camera.ExposureTime.Max
-        #     )
-        # ):
-        #     error_msg = f"Exposure time must be between the available range of the camera {camera.ExposureTime.Min} {camera.ExposureTime.Max}"
-        #
-        # return error
+        # white_balancing(camera, True)
+        self._set_exposure(camera, exposure_time)  # set exposure time
+        # set_gamma(camera, gamma)
+        # remove_autogain()
 
         if error_msg is not None:
             self._log.error(error_msg)
@@ -294,13 +298,10 @@ class BaslerHandler:
         device_info = self._devices_info_configured[cam_iden]
         max_attempts = self._cfg.grab.max_attempts
 
-        # try:
-
         # init
         if not camera.IsGrabbing():
             # start the grabbing
             camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
-        self._set_exposure(camera, exposure_time)  # set exposure time
 
         # grab loop
         n_attempts = 0
