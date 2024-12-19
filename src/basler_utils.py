@@ -16,8 +16,8 @@ def set_auto_target(camera: pylon.InstantCamera, target: int):
 def remove_color_correction(camera: pylon.InstantCamera):
     try:
         camera.ColorAdjustmentEnable.Value = False
-        camera.ColorTransformationMatrixFactor.Value = 0
-        camera.ColorTransformationMatrixFactorRaw.Value = 0
+        camera.ColorTransformationMatrixFactor.Value = 1
+        # camera.ColorTransformationMatrixFactorRaw.Value = 0
     except:
         pass
 
