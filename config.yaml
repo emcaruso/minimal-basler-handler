@@ -26,7 +26,7 @@ match_keys:
 grab:
   max_image_num: 50 # maximum number of consecutive images to grab
   max_attempts: 5 # maximum number of attempts while grabbing an image
-  timeout: 5000 # timeout for waiting a grab result
+  timeout: 100000 # timeout for waiting a grab result
   exposure_time_default: auto # default exposure time
   fps: 60 # fps value for the video stream
   autoexposure:
@@ -38,6 +38,7 @@ results:
   path_json: "../data/results/results.json"
   max_result_num: 5
 
+# apirest configs
 apirest:
   ip: 0.0.0.0
-  port: 5000
+  port: 80
