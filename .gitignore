@@ -3,4 +3,4 @@ src/__pycache__/
 logs/
 data/
 env/.venv/
-env/venv/
+!data/pfs_files/.gitkeep

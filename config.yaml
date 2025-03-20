@@ -6,6 +6,7 @@ log:
 # cameras data
 data:
   path_json: "../data/camera_data.json"
+  pfs_dir: "../data/pfs_files"
 
 # info of cameras
 # see keys at https://docs.baslerweb.com/pylonapi/cpp/namespace_pylon_1_1_key#variable-serialnumberkey
@@ -29,11 +30,14 @@ grab:
   exposure_time_default: auto # default exposure time
   fps: 60 # fps value for the video stream
   autoexposure:
-    brightness_val: 50 # target brightness value for autoexposure
-    brightness_thresh: 0.0 # brightness threshold
+    brightness_val: 0.18 # target brightness value for autoexposure
 
 # saved results
 results:
   dir: "../data/results"
   path_json: "../data/results/results.json"
   max_result_num: 5
+
+apirest:
+  ip: 0.0.0.0
+  port: 5000

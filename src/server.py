@@ -3,8 +3,7 @@ from flask_restful import Api, Resource, reqparse
 from basler_handler import BaslerHandler
 from pathlib import Path
 import os
-import base64
-import json
+from omegaconf import OmegaConf
 
 app = Flask(__name__)
 api = Api(app)
@@ -12,7 +11,6 @@ script_path = Path(__file__).parent
 data_path = script_path / ".." / "data" / "results"
 images_path = data_path / "images"
 config_path = script_path / ".." / "config.yaml"
-
 bh = BaslerHandler(os.path.realpath(str(config_path)))
 
 
@@ -165,15 +163,14 @@ api.add_resource(ChangeIdentifier, "/change_iden/<string:cam_iden>/<string:new_i
 api.add_resource(QRCode, "/camera/<string:cam_iden>/qrcodes")
 
 if __name__ == "__main__":
+    cfg = OmegaConf.load(os.path.realpath(str(config_path)))
 
-    # debug mode
-    app.run(host="0.0.0.0", port=80, debug=True)
-    # app.run(host="0.0.0.0", port=5000, debug=True)
-
-    # normal mode
-    # app.run(host="0.0.0.0", port=80)
-    # app.run(host="0.0.0.0", port=5000)
-
-    # from waitress import serve
-    # serve(app, host="0.0.0.0", port=80)
-    # serve(app, host="0.0.0.0", port=5000)
+    # # debug mode
+    # app.run(host=cfg.apirest.ip, port=cfg.apirest.port, debug=True)
+    
+    # # normal mode
+    # app.run(host=cfg.apirest.ip, port=cfg.apirest.port, debug=False)
+    
+    # WSGI server for deployment
+    from waitress import serve
+    serve(app, host=cfg.apirest.ip, port=cfg.apirest.port)

@@ -4,22 +4,14 @@ from pypylon import pylon, genicam
 def set_auto_target(camera: pylon.InstantCamera, target: int):
 
     try:
-        val = int(target)
+        val = int(target*255)
         camera.AutoTargetValue.Value = val
     except:
         try:
             camera.AutoTargetBrightness.Value = target
         except:
+            import ipdb; ipdb.set_trace()
             pass
-
-
-def remove_color_correction(camera: pylon.InstantCamera):
-    try:
-        camera.ColorAdjustmentEnable.Value = False
-        camera.ColorTransformationMatrixFactor.Value = 0
-        camera.ColorTransformationMatrixFactorRaw.Value = 0
-    except:
-        pass
 
 
 def white_balancing(camera: pylon.InstantCamera, on: bool):
@@ -48,13 +40,19 @@ def remove_autogain(camera: pylon.InstantCamera):
         camera.GainAuto.Value = "Off"
     except:
         pass
-    pass
+
+    try:
+        camera.Gain.Value = 0
+    except:
+        try:
+            camera.GainRaw.Value = 0
+        except:
+            pass
 
 
 def set_autoexposure(
     camera: pylon.InstantCamera,
     brightness_val: int,
-    brightness_thresh: int,
     timeout: int,
 ):
     """
@@ -76,14 +74,15 @@ def set_autoexposure(
     # camera.BslColorSpace.Value = "Off"
     converter = pylon.ImageFormatConverter()
     converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-    for i in range(7):
+    for i in range(12):
         grabResult = camera.RetrieveResult(
             timeout, pylon.TimeoutHandling_ThrowException
         )
         if grabResult.GrabSucceeded():
             img = converter.Convert(grabResult).GetArray()
             brightness = img.mean() / 255
-            print(brightness)
+            # print(brightness)
+            # print(brightness)
 
             # # custom thresholding
             # if abs(brightness - brightness_val) < brightness_thresh:

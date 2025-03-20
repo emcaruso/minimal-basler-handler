@@ -4,7 +4,6 @@ from basler_utils import (
     set_exposure,
     set_fps,
     get_exposure,
-    remove_color_correction,
     white_balancing,
     set_gamma,
     remove_autogain,
@@ -61,6 +60,8 @@ class BaslerHandler:
         # qrcode detector
         self.qrcodes = QRCodeDetector(config_path)
 
+        self._load_features()
+
     def __del__(self) -> None:
         """
         Close the camera array
@@ -76,6 +77,32 @@ class BaslerHandler:
     ########################################
     ############## PROTECTED ###############
     ########################################
+
+    def _load_features(self):
+        self._load_devices()
+        if not Path(self._cfg.data.pfs_dir).exists():
+            raise ValueError(f"Path {self.cfg.data.pfs_dir} does not exist")
+        else:
+            info = list(self._devices_info_configured.keys())
+            for i, cam in enumerate(self._cam_array):
+                device = self._devices[i]
+                cam.Open()
+                name_model = device.GetModelName()
+                name_cam= info[i]
+                path_cam = Path(self._cfg.data.pfs_dir) / f"{name_cam}.pfs"
+                path_model = Path(self._cfg.data.pfs_dir) / f"{name_model}.pfs"
+                if not path_model.exists():
+                    self._log.warning(f"Feature file for camera model {name_model} not found, creating new one")
+                    pylon.FeaturePersistence.Save(str(path_model), cam.GetNodeMap())
+                if path_cam.exists():
+                    self._log.info(f"Loading features for camera {i} ({name_cam})")
+                    pylon.FeaturePersistence.Load(str(path_cam), cam.GetNodeMap(), True)
+                else:
+                    self._log.warning(f"Feature file for camera {name_cam} not found, loading from camera model")
+                    pylon.FeaturePersistence.Load(str(path_model), cam.GetNodeMap(), True)
+                    self._log.warning(f"Save features for camera {name_cam}")
+                    pylon.FeaturePersistence.Save(str(path_cam), cam.GetNodeMap())
+                cam.Close()
 
     def _devices_info_to_string(self, devices_info: dict) -> str:
         """
@@ -211,7 +238,6 @@ class BaslerHandler:
             set_autoexposure(
                 camera,
                 self._cfg.grab.autoexposure.brightness_val,
-                self._cfg.grab.autoexposure.brightness_thresh,
                 self._cfg.grab.timeout,
             )
 
@@ -226,7 +252,7 @@ class BaslerHandler:
 
         # camera.Close()
         # camera.Open()
-        # camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
+        # camera.StartGrabbing(pylon.GrabStrategy_LatestImages)
 
     def _stop_cams(self) -> None:
         """
@@ -285,8 +311,7 @@ class BaslerHandler:
             camera.Open()  # open the camera
 
         # remove color correction
-        remove_color_correction(camera)
-        white_balancing(camera, True)
+        white_balancing(camera, False)
         set_gamma(camera, gamma)
         remove_autogain(camera)
 
@@ -300,7 +325,7 @@ class BaslerHandler:
         # init
         if not camera.IsGrabbing():
             # start the grabbing
-            camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
+            camera.StartGrabbing(pylon.GrabStrategy_LatestImages)
 
         # set exposure
         self._set_exposure(camera, exposure_time)  # set exposure time
@@ -383,6 +408,8 @@ class BaslerHandler:
                 }
 
                 self._n_devices_configured = len(self._devices_info_configured)
+
+
             return True
         else:
             self._devices_info_configured = {}
@@ -712,7 +739,7 @@ class BaslerHandler:
         # self._set_exposure(camera, exposure_time) # set exposure time
         if not camera.IsGrabbing():
             # start the grabbing
-            camera.StartGrabbing(pylon.GrabStrategy_UpcomingImage)
+            camera.StartGrabbing(pylon.GrabStrategy_LatestImages)
 
         # set fps
         self._set_fps(camera, self._cfg.grab.fps)
