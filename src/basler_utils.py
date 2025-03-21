@@ -4,7 +4,7 @@ from pypylon import pylon, genicam
 def set_auto_target(camera: pylon.InstantCamera, target: int):
 
     try:
-        val = int(target*255)
+        val = max(int(target*255),50)
         camera.AutoTargetValue.Value = val
     except:
         try:
@@ -30,9 +30,10 @@ def set_gamma(camera: pylon.InstantCamera, gamma: float):
     try:
         camera.GammaSelector.Value = "User"
         camera.GammaEnable.Value = True
+        camera.Gamma.Value = gamma
     except:
         pass
-    camera.Gamma.Value = gamma
+    
 
 
 def remove_autogain(camera: pylon.InstantCamera):

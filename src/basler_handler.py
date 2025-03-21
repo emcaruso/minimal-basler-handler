@@ -81,28 +81,31 @@ class BaslerHandler:
     def _load_features(self):
         self._load_devices()
         if not Path(self._cfg.data.pfs_dir).exists():
-            raise ValueError(f"Path {self.cfg.data.pfs_dir} does not exist")
+            raise ValueError(f"Path {self._cfg.data.pfs_dir} does not exist")
         else:
             info = list(self._devices_info_configured.keys())
             for i, cam in enumerate(self._cam_array):
-                device = self._devices[i]
-                cam.Open()
-                name_model = device.GetModelName()
-                name_cam= info[i]
-                path_cam = Path(self._cfg.data.pfs_dir) / f"{name_cam}.pfs"
-                path_model = Path(self._cfg.data.pfs_dir) / f"{name_model}.pfs"
-                if not path_model.exists():
-                    self._log.warning(f"Feature file for camera model {name_model} not found, creating new one")
-                    pylon.FeaturePersistence.Save(str(path_model), cam.GetNodeMap())
-                if path_cam.exists():
-                    self._log.info(f"Loading features for camera {i} ({name_cam})")
-                    pylon.FeaturePersistence.Load(str(path_cam), cam.GetNodeMap(), True)
-                else:
-                    self._log.warning(f"Feature file for camera {name_cam} not found, loading from camera model")
-                    pylon.FeaturePersistence.Load(str(path_model), cam.GetNodeMap(), True)
-                    self._log.warning(f"Save features for camera {name_cam}")
-                    pylon.FeaturePersistence.Save(str(path_cam), cam.GetNodeMap())
-                cam.Close()
+                try:
+                    device = self._devices[i]
+                    cam.Open()
+                    name_model = device.GetModelName()
+                    name_cam= info[i]
+                    path_cam = Path(self._cfg.data.pfs_dir) / f"{name_cam}.pfs"
+                    path_model = Path(self._cfg.data.pfs_dir) / f"{name_model}.pfs"
+                    if not path_model.exists():
+                        self._log.warning(f"Feature file for camera model {name_model} not found, creating new one")
+                        pylon.FeaturePersistence.Save(str(path_model), cam.GetNodeMap())
+                    if path_cam.exists():
+                        self._log.info(f"Loading features for camera {i} ({name_cam})")
+                        pylon.FeaturePersistence.Load(str(path_cam), cam.GetNodeMap(), True)
+                    else:
+                        self._log.warning(f"Feature file for camera {name_cam} not found, loading from camera model")
+                        pylon.FeaturePersistence.Load(str(path_model), cam.GetNodeMap(), True)
+                        self._log.warning(f"Save features for camera {name_cam}")
+                        pylon.FeaturePersistence.Save(str(path_cam), cam.GetNodeMap())
+                    cam.Close()
+                except:
+                    pass
 
     def _devices_info_to_string(self, devices_info: dict) -> str:
         """
