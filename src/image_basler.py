@@ -148,7 +148,6 @@ class ImageBasler:
                     f.write("")
                 data = defaultdict(list)
 
-            import ipdb; ipdb.set_trace()
             data[self.image_info["cam_iden"]].append(self.image_info)
 
             # remove old
