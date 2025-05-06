@@ -320,7 +320,7 @@ class BaslerHandler:
 
         if error_msg is not None:
             self._log.error(error_msg)
-            return ImageBasler.init_error({}, error_msg)
+            return ImageBasler.init_error({"cam_iden": cam_iden}, error_msg)
 
         device_info = self._devices_info_configured[cam_iden]
         max_attempts = self._cfg.grab.max_attempts
@@ -357,7 +357,7 @@ class BaslerHandler:
             #  if max attempts is exceeded, exit
             elif n_attempts > max_attempts:
                 self._log.error(error_msg)
-                return ImageBasler.init_error({}, "Max number of attempts exceeded")
+                return ImageBasler.init_error({"cam_iden": cam_iden}, "Max number of attempts exceeded, check internet connection")
 
             # update number of attempts
             n_attempts += 1
@@ -814,6 +814,7 @@ class BaslerHandler:
 
         # save images in the results
         for i, image_basler in enumerate(results):
+            #if image_basler.success():
             cam_iden = cam_idens[i]
             image_basler.save(
                 self._cfg.results.path_json, self._cfg.results.max_result_num

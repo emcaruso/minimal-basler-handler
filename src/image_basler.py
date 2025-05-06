@@ -137,15 +137,18 @@ class ImageBasler:
             os.makedirs(self.results_dir, exist_ok=True)
             json_path = os.path.join(f"{self.results_dir}","results.json")
 
-            if not os.path.exists(json_path):
-                with open(json_path, "w") as f:
-                    f.write("")
-                data = defaultdict(list)
-            else:
+
+            try:
                 with open(json_path, "r") as f:
                     data = json.load(f)
                     if self.image_info["cam_iden"] not in data.keys():
                         data[self.image_info["cam_iden"]] = []
+            except:
+                with open(json_path, "w") as f:
+                    f.write("")
+                data = defaultdict(list)
+
+            import ipdb; ipdb.set_trace()
             data[self.image_info["cam_iden"]].append(self.image_info)
 
             # remove old
