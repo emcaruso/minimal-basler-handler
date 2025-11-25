@@ -84,12 +84,23 @@ class BaslerHandler:
             raise ValueError(f"Path {self._cfg.data.pfs_dir} does not exist")
         else:
             info = list(self._devices_info_configured.keys())
+            
             for i, cam in enumerate(self._cam_array):
                 try:
                     device = self._devices[i]
+                    #import ipdb; ipdb.set_trace()
+                    name_cam = None
+                    for k,v in self._devices_info_configured.items():
+                        sn_c = v['SerialNumber']
+                        sn_d = device.GetSerialNumber()
+                        if sn_c == sn_d:
+                            name_cam = k
+                    if name_cam is None:
+                        continue
+                    #print(device.GetAddress())
                     cam.Open()
                     name_model = device.GetModelName()
-                    name_cam= info[i]
+                    #name_cam= info[i]
                     path_cam = Path(self._cfg.data.pfs_dir) / f"{name_cam}.pfs"
                     path_model = Path(self._cfg.data.pfs_dir) / f"{name_model}.pfs"
                     if not path_model.exists():
@@ -328,13 +339,16 @@ class BaslerHandler:
         # init
         if not camera.IsGrabbing():
             # start the grabbing
-            camera.StartGrabbing(pylon.GrabStrategy_LatestImages)
+            camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
         # set exposure
         self._set_exposure(camera, exposure_time)  # set exposure time
 
         # grab loop
         n_attempts = 0
+        import time
+        
+        
         while camera.IsGrabbing():
 
             # wait for an image and then retrieve it.
@@ -354,10 +368,15 @@ class BaslerHandler:
                     )
                 break
 
+
             #  if max attempts is exceeded, exit
             elif n_attempts > max_attempts:
+                err_message = grabResult.GetErrorDescription() 
+                print()
                 self._log.error(error_msg)
-                return ImageBasler.init_error({"cam_iden": cam_iden}, "Max number of attempts exceeded, check internet connection")
+                return ImageBasler.init_error({"cam_iden": cam_iden}, "Max number of attempts exceeded, check internet connection: "+err_message)
+            else:
+                time.sleep(0.01)
 
             # update number of attempts
             n_attempts += 1
@@ -742,7 +761,7 @@ class BaslerHandler:
         # self._set_exposure(camera, exposure_time) # set exposure time
         if not camera.IsGrabbing():
             # start the grabbing
-            camera.StartGrabbing(pylon.GrabStrategy_LatestImages)
+            camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
         # set fps
         self._set_fps(camera, self._cfg.grab.fps)

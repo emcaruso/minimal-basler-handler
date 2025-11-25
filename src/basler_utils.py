@@ -10,7 +10,7 @@ def set_auto_target(camera: pylon.InstantCamera, target: int):
         try:
             camera.AutoTargetBrightness.Value = target
         except:
-            import ipdb; ipdb.set_trace()
+            #import ipdb; ipdb.set_trace()
             pass
 
 
