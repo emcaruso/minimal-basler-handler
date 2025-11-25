@@ -85,11 +85,11 @@ class BaslerHandler:
         else:
             info = list(self._devices_info_configured.keys())
 
-            sn_c = [v['SerialNumber'] for v in self._devices_info_configured.values()]
-            sn_d = [d.GetSerialNumber() for d in self._devices]
+            sns_c = [v['SerialNumber'] for v in self._devices_info_configured.values()]
+            sns_d = [d.GetSerialNumber() for d in self._devices]
             ks_c = [k for k in self._devices_info_configured.keys()]
-            for i, sn in enumerate(sn_c):
-                if not sn in sn_d:
+            for i, sn in enumerate(sns_c):
+                if not sn in sns_d:
                     self._log.warning(f"camera {ks_c[i]} is not available!!")
 
             
