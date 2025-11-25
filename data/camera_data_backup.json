@@ -1,0 +1,112 @@
+{
+    "cable_door": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.10",
+        "SerialNumber": "25047646",
+        "MacAddress": "0030534D055E",
+        "cam_idx": 0,
+        "rotation": 90,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "display_door": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.11",
+        "SerialNumber": "25047647",
+        "MacAddress": "0030534D055F",
+        "cam_idx": 1,
+        "rotation": 270,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "service_door": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.12",
+        "SerialNumber": "25047654",
+        "MacAddress": "0030534D0566",
+        "cam_idx": 2,
+        "rotation": 90,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "blind_door": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.13",
+        "SerialNumber": "25047655",
+        "MacAddress": "0030534D0567",
+        "cam_idx": 3,
+        "rotation": 90,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "cable_door_top": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.14",
+        "SerialNumber": "25133932",
+        "MacAddress": "0030534E566C",
+        "cam_idx": 4,
+        "rotation": 0,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "service_door_bottom": {
+        "VendorName": "Basler",
+        "ModelName": "a2A2590-22gmBAS",
+        "IpAddress": "10.5.20.16",
+        "SerialNumber": "40527695",
+        "MacAddress": "003053367493",
+        "cam_idx": 5,
+        "rotation": 0,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "blind_door_bottom": {
+        "VendorName": "Basler",
+        "ModelName": "a2A2590-22gmBAS",
+        "IpAddress": "10.5.20.17",
+        "SerialNumber": "40527699",
+        "MacAddress": "003053367497",
+        "cam_idx": 6,
+        "rotation": 0,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "display_door_bottom": {
+        "VendorName": "Basler",
+        "ModelName": "a2A2590-22gmBAS",
+        "IpAddress": "10.5.20.18",
+        "SerialNumber": "40527700",
+        "MacAddress": "003053367498",
+        "cam_idx": 7,
+        "rotation": 0,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "display_door_top": {
+        "VendorName": "Basler",
+        "ModelName": "a2A2590-22gmBAS",
+        "IpAddress": "10.5.20.19",
+        "SerialNumber": "40527704",
+        "MacAddress": "00305336749C",
+        "cam_idx": 8,
+        "rotation": 0,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    },
+    "display_door_display_back": {
+        "VendorName": "Basler",
+        "ModelName": "acA5472-5gc",
+        "IpAddress": "10.5.20.9",
+        "SerialNumber": "25287805",
+        "MacAddress": "00305350AF7D",
+        "cam_idx": 5,
+        "rotation": 90,
+        "exposure_time": "auto",
+        "gamma": 0.5
+    }
+}
