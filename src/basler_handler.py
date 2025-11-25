@@ -84,6 +84,14 @@ class BaslerHandler:
             raise ValueError(f"Path {self._cfg.data.pfs_dir} does not exist")
         else:
             info = list(self._devices_info_configured.keys())
+
+            sn_c = [v['SerialNumber'] for v in self._devices_info_configured.values()]
+            sn_d = [d.GetSerialNumber() for d in self._devices]
+            ks_c = [k for k in self._devices_info_configured.keys()]
+            for i, sn in enumerate(sn_c):
+                if not sn in sn_d:
+                    self._log.warning(f"camera {ks_c[i]} is not available!!")
+
             
             for i, cam in enumerate(self._cam_array):
                 try:
@@ -96,6 +104,7 @@ class BaslerHandler:
                         if sn_c == sn_d:
                             name_cam = k
                     if name_cam is None:
+                        
                         continue
                     #print(device.GetAddress())
                     cam.Open()
